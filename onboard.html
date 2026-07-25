@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eunomia Network // Operational Gateway</title>
+
+  <!-- Theme init FIRST — prevents flash of wrong theme -->
+  <script src="js/theme-init.js"></script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/tailwind.config.js"></script>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- wallet.js registers alpine:init before Alpine runs -->
+  <script src="js/wallet.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <link rel="stylesheet" href="css/styles.css">
+
+  <style>
+    .perspective-container { perspective: 1200px; }
+
+    .metallic-card {
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+    .card-content-3d { transform: translateZ(25px); }
+
+    .btn-amber-metallic {
+      background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+      color: #FFFFFF;
+      box-shadow: 0 4px 20px rgba(217,119,6,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
+      border: 1px solid rgba(245,158,11,0.5);
+    }
+    .btn-amber-metallic:hover {
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      box-shadow: 0 6px 25px rgba(217,119,6,0.35);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+
+<body
+  x-data="onboardState"
+  class="bg-bgLight dark:bg-bgDark text-gray-900 dark:text-white font-sans antialiased min-h-screen flex flex-col justify-between overflow-x-hidden relative"
+>
+
+  <!-- 3D Scales of Justice background -->
+  <div id="canvas3d" class="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-80 dark:opacity-90"></div>
+
+  <!-- NAV -->
+  <header class="w-full z-40 px-6 py-4 flex items-center justify-between border-b border-cardBorderLight dark:border-cardBorderDark bg-cardBgLight/70 dark:bg-cardBgDark/70 backdrop-blur-md sticky top-0">
+    <div class="flex items-center gap-3">
+      <span class="w-2.5 h-2.5 bg-amberAccent rounded-full inline-block animate-ping"></span>
+      <span class="text-xs font-bold tracking-wider text-gray-800 dark:text-gray-200 uppercase font-mono">
+        EUNOMIA NETWORK <span class="text-amberAccent">// GATEWAY</span>
+      </span>
+    </div>
+    <div class="flex items-center gap-3">
+      <!-- Theme toggle — persists back to localStorage -->
+      <button
+        @click="toggleTheme()"
+        class="bg-cardBgLight/80 dark:bg-cardBgDark/80 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-full p-2.5 shadow-md text-gray-700 dark:text-gray-300 hover:text-amberAccent transition"
+        title="Toggle Theme"
+      >
+        <template x-if="darkMode"><i data-lucide="sun" class="w-4 h-4 text-amberAccent"></i></template>
+        <template x-if="!darkMode"><i data-lucide="moon" class="w-4 h-4 text-gray-800"></i></template>
+      </button>
+
+      <!-- Wallet badge — reads from localStorage -->
+      <div class="bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-full px-4 py-2 shadow-md text-xs font-mono font-semibold flex items-center gap-3 text-gray-800 dark:text-gray-100">
+        <span class="flex items-center gap-1.5 text-emerald-500 font-bold">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span x-text="walletChain"></span>
+        </span>
+        <span class="text-cardBorderDark dark:text-zinc-700">|</span>
+        <span class="text-amberAccent font-bold">100 $EU</span>
+        <span class="text-cardBorderDark dark:text-zinc-700">|</span>
+        <span x-text="walletAddress"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="max-w-6xl mx-auto px-6 py-12 flex-1 flex flex-col justify-center items-center w-full z-10 perspective-container relative">
+
+    <div class="text-center max-w-2xl mb-12 space-y-3 z-10">
+      <div id="badge" class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-amberAccent/30 bg-amberGlow text-amberAccent text-xs font-mono shadow-xs opacity-0 backdrop-blur-md">
+        ✦ Authenticated Session Connected
+      </div>
+      <h1 id="title" class="text-3xl sm:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-tight opacity-0">
+        Select Operational Workspace
+      </h1>
+      <p id="subtitle" class="text-subtleTextLight dark:text-subtleTextDark text-xs sm:text-sm max-w-lg mx-auto leading-relaxed font-sans opacity-0">
+        Route your wallet credentials into threat hunter submission, quorum consensus voting, or BLI-certified legal forensics generation.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full z-10">
+
+      <!-- Threat Hunter -->
+      <div class="metallic-card workspace-card bg-cardBgLight/85 dark:bg-cardBgDark/85 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-8 flex flex-col justify-between opacity-0 hover:border-amberAccent/40">
+        <div class="card-content-3d">
+          <div class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark flex items-center justify-center text-amberAccent mb-6">
+            <i data-lucide="crosshair" class="w-6 h-6"></i>
+          </div>
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Threat Hunter Terminal</h2>
+          <p class="text-xs text-subtleTextLight dark:text-subtleTextDark leading-relaxed mb-6 font-sans">
+            Locate, analyze, and submit malicious smart contracts or exploit vectors. Run client-side static checks and stake $EU collateral.
+          </p>
+          <ul class="space-y-2.5 mb-8 font-mono text-xs text-gray-700 dark:text-gray-300">
+            <li class="flex items-center gap-2"><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-amberAccent"></i> $EU Collateral Staking</li>
+            <li class="flex items-center gap-2"><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-amberAccent"></i> Automated Telemetry Scan</li>
+            <li class="flex items-center gap-2 text-subtleTextLight dark:text-subtleTextDark"><i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-40"></i> Status: Ready for Payload</li>
+          </ul>
+        </div>
+        <button class="btn-white-metallic card-content-3d w-full py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2">
+          <span>LAUNCH TERMINAL</span>
+          <i data-lucide="arrow-right" class="w-4 h-4 text-amberAccent"></i>
+        </button>
+      </div>
+
+      <!-- DAO Governance -->
+      <div class="metallic-card workspace-card bg-cardBgLight/85 dark:bg-cardBgDark/85 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-8 flex flex-col justify-between opacity-0 hover:border-amberAccent/40">
+        <div class="card-content-3d">
+          <div class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark flex items-center justify-center text-amberAccent mb-6">
+            <i data-lucide="landmark" class="w-6 h-6"></i>
+          </div>
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-2">DAO Governance Quorum</h2>
+          <p class="text-xs text-subtleTextLight dark:text-subtleTextDark leading-relaxed mb-6 font-sans">
+            Inspect pending threat submissions, review aggregated telemetry proofs, cast quorum votes, and trigger smart contract bounties.
+          </p>
+          <ul class="space-y-2.5 mb-8 font-mono text-xs text-gray-700 dark:text-gray-300">
+            <li class="flex items-center gap-2"><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-amberAccent"></i> Active Quorum Queue</li>
+            <li class="flex items-center gap-2"><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-amberAccent"></i> Slashable Stake Verification</li>
+            <li class="flex items-center gap-2 text-subtleTextLight dark:text-subtleTextDark"><i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-40"></i> Quorum Threshold: 85%</li>
+          </ul>
+        </div>
+        <button class="btn-white-metallic card-content-3d w-full py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2">
+          <span>ENTER QUORUM QUEUE</span>
+          <i data-lucide="arrow-right" class="w-4 h-4 text-amberAccent"></i>
+        </button>
+      </div>
+
+      <!-- BLI Legal Forensics -->
+      <div class="metallic-card workspace-card relative bg-cardBgLight/85 dark:bg-cardBgDark/85 backdrop-blur-md border border-amberAccent/30 rounded-2xl p-8 flex flex-col justify-between opacity-0 shadow-lg hover:border-amberAccent/60">
+        <div class="absolute top-5 right-5 w-12 h-12 rounded-full border border-amberAccent/30 bg-amberGlow flex items-center justify-center card-content-3d">
+          <svg id="bliSeal" class="w-8 h-8 text-amberAccent" viewBox="0 0 100 100">
+            <path id="curve" fill="none" d="M 50,50 m -37,0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0"/>
+            <text class="text-[10px] font-mono fill-amberAccent uppercase tracking-widest font-bold">
+              <textPath href="#curve">• BLI SEAL • COURT CERTIFIED</textPath>
+            </text>
+          </svg>
+        </div>
+        <div class="card-content-3d">
+          <div class="w-12 h-12 rounded-xl bg-amberGlow border border-amberAccent/30 flex items-center justify-center text-amberAccent mb-6">
+            <i data-lucide="scale" class="w-6 h-6"></i>
+          </div>
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Dispute & Legal Forensics</h2>
+          <p class="text-xs text-subtleTextLight dark:text-subtleTextDark leading-relaxed mb-6 font-sans">
+            Audit verified threat reports and generate court-admissible, XBRL-formatted dossiers backed by the Blockchain Legal Institute.
+          </p>
+          <ul class="space-y-2.5 mb-8 font-mono text-xs text-gray-700 dark:text-gray-300">
+            <li class="flex items-center gap-2"><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-amberAccent"></i> XBRL Court Artifacts</li>
+            <li class="flex items-center gap-2"><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-amberAccent"></i> 34 Admissible Jurisdictions</li>
+            <li class="flex items-center gap-2 text-amberAccent font-bold"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Cryptographic Attestation</li>
+          </ul>
+        </div>
+        <button class="btn-amber-metallic card-content-3d w-full py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2">
+          <span>GENERATE LEGAL DOSSIER</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full border-t border-cardBorderLight dark:border-cardBorderDark bg-cardBgLight/70 dark:bg-cardBgDark/70 backdrop-blur-md px-6 py-4 flex flex-col sm:flex-row justify-between items-center text-[11px] font-mono text-subtleTextLight dark:text-subtleTextDark gap-2 z-20">
+    <div class="flex items-center gap-4">
+      <span>SYSTEM: <span class="text-emerald-500 font-bold">ONLINE</span></span>
+      <span>ORCHESTRATION: <span class="text-amberAccent font-bold">EUNOMIA-DON</span></span>
+    </div>
+    <div>EUNOMIA THREAT REGISTRY © 2026 // IN PARTNERSHIP WITH BLI</div>
+  </footer>
+
+  <script>
+    // Alpine component for onboard page — reads everything from localStorage
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('onboardState', () => {
+        const wallet = JSON.parse(localStorage.getItem('eunomia-wallet') || '{}');
+        const isDark  = localStorage.getItem('eunomia-theme') !== 'light';
+        return {
+          darkMode:      isDark,
+          walletAddress: wallet.address || '—',
+          walletChain:   wallet.chain === 'solana' ? 'Solana' : 'Sepolia',
+
+          toggleTheme() {
+            this.darkMode = !this.darkMode;
+            document.documentElement.classList.toggle('dark', this.darkMode);
+            localStorage.setItem('eunomia-theme', this.darkMode ? 'dark' : 'light');
+            if (window.update3DTheme) window.update3DTheme(this.darkMode);
+          },
+        };
+      });
+    });
+
+    lucide.createIcons();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Entrance animations
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      tl.to('#badge',          { opacity: 1, y: 0, duration: 0.5 })
+        .to('#title',          { opacity: 1, y: 0, duration: 0.6 }, '-=0.3')
+        .to('#subtitle',       { opacity: 1, y: 0, duration: 0.6 }, '-=0.4')
+        .to('.workspace-card', { opacity: 1, y: 0, duration: 0.7, stagger: 0.12 }, '-=0.3');
+
+      // BLI seal rotation
+      gsap.to('#bliSeal', { rotation: 360, transformOrigin: '50% 50%', duration: 22, repeat: -1, ease: 'none' });
+
+      // 3D card tilt + specular
+      document.querySelectorAll('.metallic-card').forEach(card => {
+        card.addEventListener('mousemove', e => {
+          const r = card.getBoundingClientRect();
+          const x = e.clientX - r.left, y = e.clientY - r.top;
+          const cx = r.width / 2, cy = r.height / 2;
+          gsap.to(card, { rotateX: ((y - cy) / cy) * -10, rotateY: ((x - cx) / cx) * 10, duration: 0.4, ease: 'power2.out' });
+          const dark = document.documentElement.classList.contains('dark');
+          card.style.background = dark
+            ? `radial-gradient(circle at ${x}px ${y}px,rgba(217,119,6,0.12) 0%,rgba(17,17,17,0.88) 65%)`
+            : `radial-gradient(circle at ${x}px ${y}px,rgba(217,119,6,0.08) 0%,rgba(255,255,255,0.88) 65%)`;
+        });
+        card.addEventListener('mouseleave', () => {
+          gsap.to(card, { rotateX: 0, rotateY: 0, duration: 0.6, ease: 'power2.out' });
+          card.style.background = '';
+        });
+      });
+
+      // Three.js Scales of Justice
+      init3DScaleScene();
+    });
+
+    function init3DScaleScene() {
+      const container = document.getElementById('canvas3d');
+      if (!container || typeof THREE === 'undefined') return;
+
+      const scene    = new THREE.Scene();
+      const camera   = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 8;
+
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      const dark = document.documentElement.classList.contains('dark');
+      const wireframeMat = new THREE.MeshBasicMaterial({ color: dark ? 0xCCCCCC : 0x444444, wireframe: true, transparent: true, opacity: dark ? 0.35 : 0.5 });
+      const subtleLineMat = new THREE.MeshBasicMaterial({ color: dark ? 0xCCCCCC : 0x444444, wireframe: true, transparent: true, opacity: dark ? 0.2 : 0.3 });
+
+      const scaleGroup = new THREE.Group();
+
+      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.12, 4.2, 12), wireframeMat);
+      scaleGroup.add(pillar);
+
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.95, 0.2, 16), wireframeMat);
+      base.position.y = -2.1;
+      scaleGroup.add(base);
+
+      const topFinial = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 10), wireframeMat);
+      topFinial.position.y = 2.1;
+      scaleGroup.add(topFinial);
+
+      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 3.8, 12), wireframeMat);
+      beam.rotation.z = Math.PI / 2;
+      beam.position.y = 1.55;
+      scaleGroup.add(beam);
+
+      const createPanAssembly = (xOffset) => {
+        const g = new THREE.Group();
+        g.position.set(xOffset, 1.55, 0);
+        const chainGeo = new THREE.CylinderGeometry(0.01, 0.01, 1.6, 6);
+        const lc = new THREE.Mesh(chainGeo, subtleLineMat); lc.position.set(-0.5, -0.8, 0); lc.rotation.z = -0.3; g.add(lc);
+        const rc = new THREE.Mesh(chainGeo, subtleLineMat); rc.position.set(0.5, -0.8, 0); rc.rotation.z = 0.3; g.add(rc);
+        const dish = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.05, 0.32, 14, 2, true), wireframeMat);
+        dish.position.y = -1.6; g.add(dish);
+        return g;
+      };
+
+      const leftPan  = createPanAssembly(-1.8);
+      const rightPan = createPanAssembly(1.8);
+      scaleGroup.add(leftPan);
+      scaleGroup.add(rightPan);
+
+      function updatePos() {
+        if (window.innerWidth >= 768) { scaleGroup.position.set(3.8, 0.4, -1.2); scaleGroup.scale.set(1.25, 1.25, 1.25); }
+        else { scaleGroup.position.set(0, -0.2, -3); scaleGroup.scale.set(0.8, 0.8, 0.8); }
+      }
+      updatePos();
+      scene.add(scaleGroup);
+
+      window.update3DTheme = (isDark) => {
+        const hex = isDark ? 0xCCCCCC : 0x444444;
+        wireframeMat.color.setHex(hex); subtleLineMat.color.setHex(hex);
+        wireframeMat.opacity = isDark ? 0.35 : 0.5; subtleLineMat.opacity = isDark ? 0.2 : 0.3;
+      };
+
+      let mouseX = 0, mouseY = 0;
+      window.addEventListener('mousemove', e => {
+        mouseX = (e.clientX - window.innerWidth  / 2) * 0.0008;
+        mouseY = (e.clientY - window.innerHeight / 2) * 0.0008;
+      });
+
+      const clock = new THREE.Clock();
+      (function animate() {
+        requestAnimationFrame(animate);
+        const t = clock.getElapsedTime();
+        beam.rotation.z = Math.PI / 2 + Math.sin(t * 1.5) * 0.04;
+        leftPan.position.y  = 1.55 + Math.sin(t * 1.5) * 0.07;
+        rightPan.position.y = 1.55 - Math.sin(t * 1.5) * 0.07;
+        scaleGroup.rotation.y = Math.sin(t * 0.35) * 0.2;
+        gsap.to(scaleGroup.rotation, { x: mouseY * 0.8, duration: 1.2, ease: 'power1.out' });
+        renderer.render(scene, camera);
+      })();
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        updatePos();
+      });
+    }
+  </script>
+</body>
+</html>
