@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eunomia Network // On-Chain Forensics & Threat Registry</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/tailwind.config.js"></script>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- wallet.js must be sync BEFORE Alpine's defer so alpine:init fires correctly -->
+  <script src="js/wallet.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body x-data="appState"
+  class="bg-bgLight dark:bg-bgDark text-gray-900 dark:text-white font-sans antialiased min-h-screen overflow-x-hidden">
+
+  <!-- NAV -->
+  <header class="fixed top-4 left-0 w-full z-40 px-6 flex items-center justify-between pointer-events-none">
+    <div class="pointer-events-auto bg-cardBgLight/80 dark:bg-cardBgDark/80 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-full px-4 py-2 flex items-center gap-3 shadow-lg">
+      <span class="w-2.5 h-2.5 bg-amberAccent rounded-full inline-block animate-ping"></span>
+      <span class="text-xs font-bold tracking-wider text-gray-800 dark:text-gray-200">EUNOMIA NETWORK</span>
+    </div>
+    <div class="pointer-events-auto flex items-center gap-3">
+      <button @click="toggleTheme()" class="bg-cardBgLight/80 dark:bg-cardBgDark/80 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-full p-2.5 shadow-lg text-gray-700 dark:text-gray-300 hover:text-amberAccent transition">
+        <template x-if="darkMode"><i data-lucide="sun" class="w-4 h-4 text-amberAccent"></i></template>
+        <template x-if="!darkMode"><i data-lucide="moon" class="w-4 h-4 text-gray-800"></i></template>
+      </button>
+      <button @click="walletModalOpen = true" class="bg-cardBgLight/90 dark:bg-cardBgDark/90 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark hover:border-amberAccent/60 rounded-full px-5 py-2.5 shadow-lg text-xs font-mono font-semibold flex items-center gap-2.5 text-gray-800 dark:text-gray-100 transition group">
+        <i data-lucide="wallet" class="w-4 h-4 text-amberAccent group-hover:scale-110 transition-transform"></i>
+        <span x-text="walletConnected ? walletAddress : 'Connect Wallet'"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- WALLET MODAL -->
+  <div x-show="walletModalOpen"
+    x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+    @keydown.escape.window="walletModalOpen = false"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md" style="display:none">
+    <div @click.away="walletModalOpen = false" class="metallic-card w-full max-w-md bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 shadow-2xl space-y-6">
+      <div class="flex items-center justify-between border-b border-cardBorderLight dark:border-cardBorderDark pb-4">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-amberAccent animate-pulse"></span>
+          <h3 class="text-sm font-bold text-gray-900 dark:text-white font-mono">Connect Web3 Wallet</h3>
+        </div>
+        <button @click="walletModalOpen = false" class="text-gray-400 hover:text-white transition"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-zinc-900 rounded-xl border border-cardBorderLight dark:border-cardBorderDark text-xs font-mono">
+        <button @click="selectedChain='evm'" :class="selectedChain==='evm'?'bg-cardBgLight dark:bg-cardBgDark text-amberAccent shadow-sm':'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'" class="py-2 rounded-lg transition font-semibold">EVM Chains</button>
+        <button @click="selectedChain='solana'" :class="selectedChain==='solana'?'bg-cardBgLight dark:bg-cardBgDark text-amberAccent shadow-sm':'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'" class="py-2 rounded-lg transition font-semibold">Solana Ecosystem</button>
+      </div>
+      <div class="space-y-2.5">
+        <template x-if="selectedChain==='evm'">
+          <div class="space-y-2">
+            <button @click="connectBrowserWallet('metamask')" class="w-full flex items-center justify-between p-3.5 bg-gray-50 dark:bg-zinc-900/60 hover:bg-amberGlow border border-cardBorderLight dark:border-cardBorderDark rounded-xl transition group text-left">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center p-1.5">
+                  <svg viewBox="0 0 318.6 318.6" fill="none"><path d="M274.1 35.5L174.6 109.4L193 6.5C193.8 1.9 188.3-1.3 184.8 1.8L111.3 66.8L129.8 6.5C130.6 1.9 125.1-1.3 121.6 1.8L22.1 35.5C18.4 36.8 16.5 41 18 44.7L60.5 150.3L2.4 191.6C-.8 193.9-.8 198.7 2.4 201L88.9 262.5C90.7 263.8 93 264.1 95 263.3L157.3 238.8C158.6 238.3 160 238.3 161.3 238.8L223.6 263.3C225.6 264.1 227.9 263.8 229.7 262.5L316.2 201C319.4 198.7 319.4 193.9 316.2 191.6L258.1 150.3L300.6 44.7C302.1 41 300.2 36.8 296.5 35.5H274.1Z" fill="#E17726"/></svg>
+                </div>
+                <div><div class="text-xs font-bold text-gray-900 dark:text-white">MetaMask</div><div class="text-[10px] text-subtleTextLight dark:text-subtleTextDark font-mono">Injected EVM Provider</div></div>
+              </div>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+            <button @click="connectBrowserWallet('coinbase')" class="w-full flex items-center justify-between p-3.5 bg-gray-50 dark:bg-zinc-900/60 hover:bg-amberGlow border border-cardBorderLight dark:border-cardBorderDark rounded-xl transition group text-left">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center p-1.5">
+                  <svg viewBox="0 0 1024 1024" fill="none"><circle cx="512" cy="512" r="512" fill="#0052FF"/><path d="M512 212C346.3 212 212 346.3 212 512s134.3 300 300 300 300-134.3 300-300S677.7 212 512 212zM432 602c-11 0-20-9-20-20V442c0-11 9-20 20-20h160c11 0 20 9 20 20v140c0 11-9 20-20 20H432z" fill="white"/></svg>
+                </div>
+                <div><div class="text-xs font-bold text-gray-900 dark:text-white">Coinbase Wallet</div><div class="text-[10px] text-subtleTextLight dark:text-subtleTextDark font-mono">SDK & Extension</div></div>
+              </div>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+          </div>
+        </template>
+        <template x-if="selectedChain==='solana'">
+          <div class="space-y-2">
+            <button @click="connectSolanaWallet('backpack')" class="w-full flex items-center justify-between p-3.5 bg-gray-50 dark:bg-zinc-900/60 hover:bg-amberGlow border border-cardBorderLight dark:border-cardBorderDark rounded-xl transition group text-left">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center p-1.5">
+                  <svg viewBox="0 0 120 120" fill="none"><rect width="120" height="120" rx="28" fill="#E33E38"/><path d="M35 38a7 7 0 017-7h36a7 7 0 017 7v44a7 7 0 01-7 7H42a7 7 0 01-7-7V38z" fill="white"/><path d="M45 45h30v10H45z" fill="#E33E38"/></svg>
+                </div>
+                <div><div class="text-xs font-bold text-gray-900 dark:text-white">Backpack</div><div class="text-[10px] text-subtleTextLight dark:text-subtleTextDark font-mono">Solana & xNFT Native</div></div>
+              </div>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+            <button @click="connectSolanaWallet('phantom')" class="w-full flex items-center justify-between p-3.5 bg-gray-50 dark:bg-zinc-900/60 hover:bg-amberGlow border border-cardBorderLight dark:border-cardBorderDark rounded-xl transition group text-left">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center p-1.5">
+                  <svg viewBox="0 0 128 128" fill="none"><circle cx="64" cy="64" r="64" fill="#AB9FF2"/><path d="M100.5 64C100.5 83.6 84.6 99.5 65 99.5c-11.3 0-21.3-5.3-27.8-13.5-1.2-1.5.2-3.5 2-3.1 5.5 1.1 11.2.6 16.4-1.6 8.8-3.7 14.7-11.7 15.4-21.2.8-10.1-4.2-19.3-12.5-23.7C55.1 34.6 51.1 33.5 47 33.5c-15.7 0-28.5 12.8-28.5 28.5 0 .8 0 1.7.1 2.5.1 1.4-1.4 2.5-2.8 2-.5-.2-1-.5-1.5-1C13.1 64.1 12.4 62.4 12.4 60.5 12.4 44.5 25.4 31.5 41.5 31.5c4.8 0 9.4 1.2 13.4 3.3C67.1 41.2 75 53.8 75 68c0 10-4.2 18.9-10.9 25.3-1.3 1.2-.3 3.4 1.4 3.3.7-.1 1.3-.1 2-.1C84.6 96.5 98.5 82.6 98.5 66.5c0-.8 0-1.6-.1-2.5-.1-1.5 1.5-2.6 2.9-1.9 1.5.7 1.7 2.5 1.7 4 0 .6-.1 1.3-.1 2-.1-.1-.3-.1-.4-.1z" fill="white"/></svg>
+                </div>
+                <div><div class="text-xs font-bold text-gray-900 dark:text-white">Phantom</div><div class="text-[10px] text-subtleTextLight dark:text-subtleTextDark font-mono">Solana Extension</div></div>
+              </div>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+          </div>
+        </template>
+      </div>
+      <div class="pt-2 border-t border-cardBorderLight dark:border-cardBorderDark flex items-center justify-between text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">
+        <span class="flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3 text-amberAccent"></i> Non-custodial</span>
+        <span>Eunomia v1.0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- VAULT / HERO -->
+  <div id="vault-wrapper" class="relative w-full h-screen overflow-hidden">
+    <div id="vault-door-left" class="vault-door absolute top-0 left-0 w-1/2 h-full z-30 border-r border-cardBorderLight dark:border-cardBorderDark flex items-center justify-end pr-8">
+      <div class="w-20 h-20 rounded-full border-2 border-gray-300 dark:border-white/20 flex items-center justify-center">
+        <div class="w-12 h-12 rounded-full border border-dashed border-amberAccent animate-spin"></div>
+      </div>
+    </div>
+    <div id="vault-door-right" class="vault-door absolute top-0 right-0 w-1/2 h-full z-30 border-l border-cardBorderLight dark:border-cardBorderDark flex items-center justify-start pl-8">
+      <div class="w-20 h-20 rounded-full border-2 border-gray-300 dark:border-white/20 flex items-center justify-center">
+        <i data-lucide="shield-check" class="w-7 h-7 text-gray-500 dark:text-gray-400"></i>
+      </div>
+    </div>
+    <section class="relative w-full h-full flex flex-col items-center justify-center text-center px-4">
+      <div class="absolute inset-0 pointer-events-none z-0 flex items-center justify-center overflow-visible">
+        <div id="globe-canvas-wrapper" class="w-[600px] h-[600px] sm:w-[750px] sm:h-[750px] opacity-40 dark:opacity-50"></div>
+      </div>
+      <div class="relative z-10 max-w-2xl space-y-6">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-amberAccent/30 bg-amberGlow text-amberAccent text-xs font-mono animate-float">
+          ✦ Cryptographic Forensics & Global Threat Engine
+        </div>
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-gray-900 dark:text-white leading-[1.15]">
+          The Decentralized<br>
+          <span class="bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-700 to-gray-500 dark:from-white dark:via-gray-300 dark:to-gray-500">Threat Registry</span>
+        </h1>
+        <p class="text-subtleTextLight dark:text-subtleTextDark text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
+          Eunomia Network is where the internet reports, verifies, and tracks digital threats together. No central authority. No single point of failure.
+        </p>
+        <div class="pt-2 flex justify-center gap-4">
+          <a href="#workflow" class="btn-white-metallic text-xs font-bold px-7 py-3.5 rounded-full transition flex items-center gap-2.5">
+            <i data-lucide="shield-alert" class="w-4 h-4 text-amberAccent"></i> Submit Forensics
+          </a>
+        </div>
+      </div>
+      <div class="absolute bottom-8 z-40 flex flex-col items-center gap-1 opacity-50 hover:opacity-100 transition animate-pulseSlow">
+        <span class="text-[10px] font-mono tracking-widest text-zinc-500 dark:text-zinc-600">SCROLL TO UNLOCK VAULT</span>
+        <i data-lucide="chevron-down" class="w-4 h-4 text-zinc-500 dark:text-zinc-600"></i>
+      </div>
+    </section>
+  </div>
+
+  <!-- MAIN SECTIONS -->
+  <main class="max-w-5xl mx-auto px-6 py-20 space-y-32">
+
+    <!-- 01 WORKFLOW -->
+    <section id="workflow" class="space-y-8">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-cardBorderLight dark:border-cardBorderDark pb-6">
+        <div>
+          <span class="bg-gray-100 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark text-[10px] text-amberAccent px-3 py-1 rounded-full font-mono">01 HOW IT WORKS?</span>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight mt-3">Hunt, Submit, Earn</h2>
+        </div>
+        <div class="text-xs font-mono text-subtleTextLight dark:text-subtleTextDark">Decentralized Quorum Protocol</div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="metallic-card bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 group">
+          <div class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-amberAccent mb-6 group-hover:scale-110 transition-transform"><i data-lucide="crosshair" class="w-5 h-5"></i></div>
+          <span class="text-[10px] font-mono text-amberAccent font-semibold block mb-1">01. DETECTION</span>
+          <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-2">Wallet Hunting</h3>
+          <p class="text-xs text-subtleTextLight dark:text-subtleTextDark leading-relaxed">Detect exploits, drainers, and rogue smart contracts across EVM and non-EVM chains.</p>
+        </div>
+        <div class="metallic-card bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 group">
+          <div class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-amberAccent mb-6 group-hover:scale-110 transition-transform"><i data-lucide="file-check-2" class="w-5 h-5"></i></div>
+          <span class="text-[10px] font-mono text-amberAccent font-semibold block mb-1">02. EVIDENCE</span>
+          <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-2">Forensic Submission</h3>
+          <p class="text-xs text-subtleTextLight dark:text-subtleTextDark leading-relaxed">Submit transaction hashes, payload telemetry, and cryptographic proofs for on-chain storage.</p>
+        </div>
+        <div class="metallic-card bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 group">
+          <div class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-amberAccent mb-6 group-hover:scale-110 transition-transform"><i data-lucide="award" class="w-5 h-5"></i></div>
+          <span class="text-[10px] font-mono text-amberAccent font-semibold block mb-1">03. SETTLEMENT</span>
+          <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-2">DAO Quorum & Bounty</h3>
+          <p class="text-xs text-subtleTextLight dark:text-subtleTextDark leading-relaxed">DAO consensus verifies report validity and triggers automatic smart contract bounty payouts.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 API -->
+    <section class="space-y-8">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-cardBorderLight dark:border-cardBorderDark pb-6">
+        <div>
+          <span class="bg-gray-100 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark text-[10px] text-amberAccent px-3 py-1 rounded-full font-mono">02 // API & INTELLIGENCE</span>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight mt-3">Global On-Chain Threat Registry API</h2>
+        </div>
+        <div class="text-xs font-mono text-subtleTextLight dark:text-subtleTextDark">Plug-and-play Security Infrastructure</div>
+      </div>
+      <div class="metallic-card bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        <div class="space-y-4">
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white">Predictive Behavioral Registry</h3>
+          <p class="text-xs text-subtleTextLight dark:text-subtleTextDark leading-relaxed">Eunomia's AI model continuously aggregates DAO-approved forensic reports into a global behavioral threat graph. Web3 apps query the API in real time to flag and block malicious interactions.</p>
+          <div class="pt-2 flex items-center gap-3">
+            <button class="bg-gray-900 dark:bg-white text-white dark:text-black font-semibold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 hover:opacity-90 transition">
+              <i data-lucide="terminal" class="w-4 h-4"></i> Access API Console
+            </button>
+            <span class="text-xs font-mono text-amberAccent">Latency: &lt;12ms</span>
+          </div>
+        </div>
+        <div class="bg-black/80 rounded-xl p-4 border border-cardBorderLight dark:border-cardBorderDark font-mono text-[11px] text-gray-300 overflow-x-auto shadow-inner">
+          <div class="flex items-center justify-between text-gray-500 border-b border-zinc-800 pb-2 mb-2">
+            <span>// Eunomia Registry Query</span><span class="text-amberAccent">POST /v1/scan</span>
+          </div>
+          <pre><code>curl -X POST https://api.eunomia.network/v1/scan \
+  -H "Authorization: Bearer EUNOMIA_KEY" \
+  -d '{ "target_wallet": "0x3f2...a89" }'
+
+<span style="color:#D97706">// Response:</span>
+{
+  "address": "0x3f2...a89",
+  "threat_level": "CRITICAL",
+  "bli_certified": true,
+  "confidence": 0.99,
+  "dao_quorum_status": "VERIFIED",
+  "recommended_action": "BLOCK_TRANSACTION"
+}</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 SEVERITY -->
+    <section x-data="{ severity: 'critical' }" class="space-y-8">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-cardBorderLight dark:border-cardBorderDark pb-6">
+        <div>
+          <span class="bg-gray-100 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark text-[10px] text-amberAccent px-3 py-1 rounded-full font-mono">03 // SEVERITY CONTROL</span>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight mt-3">Liquid-Mercury Severity Gauge</h2>
+        </div>
+        <div class="text-xs font-mono text-subtleTextLight dark:text-subtleTextDark">Select state to morph fluid core</div>
+      </div>
+      <div class="metallic-card bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-8 grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+        <div class="md:col-span-5 space-y-4">
+          <p class="text-xs text-subtleTextLight dark:text-subtleTextDark leading-relaxed">Select a threat intensity level to morph the core fluid shape.</p>
+          <div class="flex flex-col gap-2">
+            <button @click="severity='critical'; animateMercury('#EF4444')" :class="severity==='critical'?'bg-red-500/10 border-red-500 text-red-500 font-semibold':'bg-gray-50 dark:bg-zinc-900 border-cardBorderLight dark:border-cardBorderDark text-gray-600 dark:text-gray-400'" class="px-4 py-3 rounded-xl border text-xs font-mono flex items-center justify-between transition-all">
+              <span>Critical Severity</span><span class="w-2 h-2 rounded-full bg-red-500"></span>
+            </button>
+            <button @click="severity='high'; animateMercury('#D97706')" :class="severity==='high'?'bg-amber-500/10 border-amber-500 text-amber-500 font-semibold':'bg-gray-50 dark:bg-zinc-900 border-cardBorderLight dark:border-cardBorderDark text-gray-600 dark:text-gray-400'" class="px-4 py-3 rounded-xl border text-xs font-mono flex items-center justify-between transition-all">
+              <span>High Severity</span><span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            </button>
+            <button @click="severity='medium'; animateMercury('#4F46E5')" :class="severity==='medium'?'bg-indigo-500/10 border-indigo-500 text-indigo-500 font-semibold':'bg-gray-50 dark:bg-zinc-900 border-cardBorderLight dark:border-cardBorderDark text-gray-600 dark:text-gray-400'" class="px-4 py-3 rounded-xl border text-xs font-mono flex items-center justify-between transition-all">
+              <span>Moderate Severity</span><span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            </button>
+          </div>
+        </div>
+        <div class="md:col-span-7 flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-black/40 rounded-2xl border border-cardBorderLight dark:border-cardBorderDark">
+          <div class="relative w-56 h-56 flex items-center justify-center">
+            <div class="absolute inset-0 rounded-full border-4 border-cardBorderLight dark:border-white/10 shadow-inner"></div>
+            <svg viewBox="0 0 200 200" class="w-44 h-44 filter drop-shadow-md">
+              <defs>
+                <linearGradient id="mercuryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop id="grad-stop-1" offset="0%" stop-color="#FFFFFF"/>
+                  <stop id="grad-stop-2" offset="50%" stop-color="#94A3B8"/>
+                  <stop id="grad-stop-3" offset="100%" stop-color="#D97706"/>
+                </linearGradient>
+              </defs>
+              <path id="mercury-blob" fill="url(#mercuryGradient)" d="M45.5,-52.7C58.3,-41.3,67.8,-25.1,69.1,-8C70.4,9.1,63.5,27.1,52,40.1C40.5,53.1,24.4,61.1,6.8,59.2C-10.8,57.3,-29.9,45.5,-42.8,31C-55.7,16.5,-62.4,-0.7,-59.6,-16.9C-56.8,-33.1,-44.5,-48.3,-29.9,-58.9C-15.3,-69.5,-0.2,-75.5,14.6,-71.4C29.4,-67.3,32.7,-64.1,45.5,-52.7Z" transform="translate(100 100)"/>
+            </svg>
+          </div>
+          <span class="text-xs font-mono text-gray-500 mt-4" x-text="`Core State: ${severity.toUpperCase()}`"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 COURT FORENSICS -->
+    <section class="space-y-8">
+      <div class="space-y-4 border-b border-cardBorderLight dark:border-cardBorderDark pb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amberGlow border border-amberAccent/30 text-[11px] font-mono font-semibold text-amberAccent">🏛 BLOCKCHAIN LEGAL INSTITUTE</div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">Every report, court-ready.</h2>
+        <p class="text-xs sm:text-sm text-subtleTextLight dark:text-subtleTextDark max-w-2xl leading-relaxed">Eunomia Network is the exclusive intelligence partner of the Blockchain Legal Institute (BLI) — the leading body for on-chain dispute resolution and crypto forensics certification.</p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div class="lg:col-span-7 space-y-4">
+          <span class="text-[10px] font-mono text-amberAccent font-semibold tracking-wider block mb-2">VERIFICATION TRACKING PIPELINE</span>
+          <div class="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-cardBorderLight dark:before:bg-cardBorderDark">
+            <div class="relative metallic-card bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-xl p-5">
+              <div class="absolute -left-[31px] top-5 w-5 h-5 rounded-full bg-amberAccent text-black flex items-center justify-center text-[10px] font-bold shadow-md">✓</div>
+              <div class="flex items-center justify-between mb-1"><span class="text-xs font-bold text-gray-900 dark:text-white font-mono">STEP 01: Verified by BLI</span><span class="text-[10px] font-mono text-amberAccent bg-amberAccent/10 px-2 py-0.5 rounded">Attestation Live</span></div>
+              <p class="text-xs text-subtleTextLight dark:text-subtleTextDark leading-relaxed">All confirmed reports carry a BLI cryptographic attestation, verifiable on-chain.</p>
+            </div>
+            <div class="relative metallic-card bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-xl p-5">
+              <div class="absolute -left-[31px] top-5 w-5 h-5 rounded-full bg-gray-300 dark:bg-zinc-700 text-gray-900 dark:text-white flex items-center justify-center text-[10px] font-bold shadow-md">⚖</div>
+              <div class="flex items-center justify-between mb-1"><span class="text-xs font-bold text-gray-900 dark:text-white font-mono">STEP 02: Dispute Resolution</span><span class="text-[10px] font-mono text-gray-500 bg-gray-500/10 px-2 py-0.5 rounded">72h SLA</span></div>
+              <p class="text-xs text-subtleTextLight dark:text-subtleTextDark leading-relaxed">Contested findings go through BLI's arbitration panel with slashable stake for accountability.</p>
+            </div>
+            <div class="relative metallic-card bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-xl p-5">
+              <div class="absolute -left-[31px] top-5 w-5 h-5 rounded-full bg-gray-300 dark:bg-zinc-700 text-gray-900 dark:text-white flex items-center justify-center text-[10px] font-bold shadow-md">📄</div>
+              <div class="flex items-center justify-between mb-1"><span class="text-xs font-bold text-gray-900 dark:text-white font-mono">STEP 03: Automated Report Generation</span><span class="text-[10px] font-mono text-gray-500 bg-gray-500/10 px-2 py-0.5 rounded">XBRL Ready</span></div>
+              <p class="text-xs text-subtleTextLight dark:text-subtleTextDark leading-relaxed mb-3">XBRL-formatted PDF with transaction graph, wallet cluster analysis, and legal chain-of-custody.</p>
+              <button class="text-xs font-mono font-semibold text-amberAccent hover:underline flex items-center gap-1"><i data-lucide="download" class="w-3.5 h-3.5"></i> Download Sample Legal XBRL</button>
+            </div>
+          </div>
+        </div>
+        <div class="lg:col-span-5">
+          <div class="metallic-card bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 relative overflow-hidden">
+            <div class="flex items-center justify-between border-b border-cardBorderLight dark:border-cardBorderDark pb-3 mb-4">
+              <div class="flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4 text-amberAccent"></i><span class="text-xs font-mono font-bold text-gray-800 dark:text-gray-200">BLI-FORENSIC-EXPLICIT.PDF</span></div>
+              <span class="text-[9px] font-mono bg-amberAccent/10 text-amberAccent px-2 py-0.5 rounded">COURT ADMISSIBLE</span>
+            </div>
+            <div class="bg-gray-50 dark:bg-zinc-950 p-5 rounded-xl border border-cardBorderLight dark:border-cardBorderDark space-y-4 relative font-mono text-[10px]">
+              <div class="absolute top-4 right-4 border-2 border-amberAccent text-amberAccent rounded-lg p-2 transform rotate-12 text-center opacity-90 pointer-events-none">
+                <div class="font-bold text-[9px] uppercase tracking-wider">OFFICIAL EVIDENCE</div>
+                <div class="text-[7px]">BLI CERTIFIED // 34 JURISDICTIONS</div>
+                <div class="text-[8px] font-bold mt-0.5">VERIFIED DAO QUORUM</div>
+              </div>
+              <div><div class="text-xs font-bold text-gray-900 dark:text-white">BLOCKCHAIN LEGAL INSTITUTE</div><div class="text-gray-400">EXPERT FORENSIC AUDIT TRAIL</div></div>
+              <div class="space-y-1.5 pt-2 border-t border-cardBorderLight dark:border-zinc-800 text-gray-600 dark:text-gray-400">
+                <div class="flex justify-between"><span class="text-gray-400">Case ID:</span><span>#EUN-2026-8891</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Target Address:</span><span class="text-amberAccent font-bold">0x92A...F3B</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">DAO Consensus:</span><span class="text-amberAccent font-bold">98.4% Quorum</span></div>
+              </div>
+              <div class="pt-2"><div class="text-gray-400 mb-1">Clustering Graph Hash:</div><div class="bg-white dark:bg-zinc-900 p-2 rounded border border-cardBorderLight dark:border-zinc-800 text-[9px] text-zinc-500 truncate">0x8f2d9101b44c219a11e8bc7d6209aef100a7</div></div>
+              <div class="pt-3 border-t border-cardBorderLight dark:border-zinc-800 flex justify-between items-center text-[9px] text-gray-400">
+                <span>Cryptographic Stamp Valid</span><span class="text-amberAccent font-bold">XBRL V2.4</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="relative w-full overflow-hidden border-t border-cardBorderLight dark:border-cardBorderDark mt-20">
+    <div class="absolute inset-0 z-0">
+      <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1920&q=80" alt="" class="w-full h-full object-cover filter grayscale contrast-125 brightness-75"/>
+      <div class="absolute inset-0 bg-gradient-to-t from-bgDark via-bgDark/85 to-bgDark/70"></div>
+    </div>
+    <div class="relative z-10 max-w-4xl mx-auto px-6 py-24 text-center space-y-6">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amberAccent/30 text-amberAccent text-[11px] font-mono" style="background:rgba(217,119,6,0.15)">
+        <span class="w-1.5 h-1.5 rounded-full bg-amberAccent animate-ping"></span> THE EUNOMIA MISSION
+      </div>
+      <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
+        Building a safer, trustless web<br class="hidden sm:inline"> for everyday people.
+      </h2>
+      <p class="text-xs sm:text-sm text-gray-300 max-w-2xl mx-auto leading-relaxed">
+        Eunomia Network is a decentralized threat registry built to give security teams, developers, and everyday users a single, trustworthy source for tracking digital threats. Verification is distributed across the community — anchored on-chain so the record can never be quietly altered or taken down.
+      </p>
+      <div class="pt-12 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] font-mono text-gray-400">
+        <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amberAccent"></span> Eunomia Network © 2026</div>
+        <div>In Partnership with Blockchain Legal Institute</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts (order matters: sphere → animations → app) -->
+  <script src="js/sphere.js"></script>
+  <script src="js/animations.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
