@@ -65,10 +65,10 @@
         title="Toggle Theme"
       >
         <template x-if="darkMode">
-          <i data-lucide="sun" class="w-4 h-4 text-amberAccent"></i>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
         </template>
         <template x-if="!darkMode">
-          <i data-lucide="moon" class="w-4 h-4 text-gray-800"></i>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
         </template>
       </button>
 
@@ -162,10 +162,10 @@
           />
           <div class="absolute right-3 top-3 flex items-center gap-1">
             <template x-if="addressStatus === 'valid'">
-              <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-500"></i>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
             </template>
             <template x-if="addressStatus === 'mismatch' || addressStatus === 'invalid'">
-              <i data-lucide="alert-triangle" class="w-5 h-5 text-amberAccent animate-bounce"></i>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-amberAccent animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
             </template>
           </div>
         </div>
@@ -179,7 +179,7 @@
             }"
             class="p-3 rounded-xl border text-xs font-mono flex items-center gap-2"
           >
-            <i data-lucide="shield-alert" class="w-4 h-4 shrink-0"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
             <span x-text="validationMessage"></span>
           </div>
         </template>
@@ -342,11 +342,8 @@
       }));
     });
 
-    // Init Lucide icons — and re-run whenever Alpine injects new elements via x-if
+    // Init Lucide icons once — x-if templates use inline SVGs so no re-init needed
     lucide.createIcons();
-    document.addEventListener('alpine:initialized', () => lucide.createIcons());
-    new MutationObserver(() => lucide.createIcons())
-      .observe(document.body, { childList: true, subtree: true });
 
     // 3D scale of justice
     (function init3DScale() {
