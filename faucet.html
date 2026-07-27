@@ -3,46 +3,48 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Eunomia Network // Judge Testnet Faucet & Token Distribution</title>
+  <title>Eunomia Network // Judge Testnet Faucet</title>
 
-  <!-- Theme init FIRST — prevents flash of wrong theme, matches rest of site -->
+  <!-- Theme init FIRST — prevents flash of wrong theme -->
   <script src="js/theme-init.js"></script>
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/tailwind.config.js"></script>
-
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- Alpine.js -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-  <!-- Three.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-  <!-- GSAP Core -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
   <link rel="stylesheet" href="css/styles.css">
 
   <style>
+    .btn-amber-metallic {
+      background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+      color: #FFFFFF;
+      box-shadow: 0 4px 20px rgba(217,119,6,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+      border: 1px solid rgba(245,158,11,0.5);
+      transition: all 0.2s ease;
+    }
+    .btn-amber-metallic:hover:not(:disabled) {
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      box-shadow: 0 6px 28px rgba(217,119,6,0.45);
+      transform: translateY(-1px);
+    }
+    .btn-amber-metallic:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-white-metallic {
       background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 50%, #CBD5E1 100%);
       color: #0F172A;
-      box-shadow: 0 4px 15px rgba(217, 119, 6, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 15px rgba(217,119,6,0.15), inset 0 1px 0 rgba(255,255,255,0.8);
       border: 1px solid #E2E8F0;
     }
-    .btn-white-metallic:hover {
-      background: linear-gradient(135deg, #FFFFFF 0%, #F1F5F9 100%);
-      box-shadow: 0 6px 20px rgba(217, 119, 6, 0.25), inset 0 1px 0 rgba(255, 255, 255, 1);
-      transform: translateY(-1px);
-    }
+    .btn-white-metallic:hover { box-shadow: 0 6px 20px rgba(217,119,6,0.25); transform: translateY(-1px); }
+    .pulse-dot { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
   </style>
 </head>
 
@@ -51,261 +53,202 @@
   class="bg-bgLight dark:bg-bgDark text-gray-900 dark:text-white font-sans antialiased min-h-screen flex flex-col justify-between overflow-x-hidden"
 >
 
-  <!-- NAVIGATION HEADER -->
+  <!-- NAV -->
   <header class="fixed top-4 left-0 w-full z-40 px-6 flex items-center justify-between pointer-events-none">
     <div class="pointer-events-auto bg-cardBgLight/80 dark:bg-cardBgDark/80 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-full px-4 py-2 flex items-center gap-3 shadow-lg">
-      <span class="w-2.5 h-2.5 bg-amberAccent rounded-full inline-block animate-ping"></span>
-      <span class="text-xs font-bold tracking-wider text-gray-800 dark:text-gray-200">EUNOMIA NETWORK // FAUCET</span>
+      <span class="w-2.5 h-2.5 bg-amberAccent rounded-full inline-block pulse-dot"></span>
+      <span class="text-xs font-bold tracking-wider text-gray-800 dark:text-gray-200 font-mono">EUNOMIA // FAUCET</span>
     </div>
-
     <div class="pointer-events-auto flex items-center gap-3">
-      <button
-        @click="toggleTheme()"
-        class="bg-cardBgLight/80 dark:bg-cardBgDark/80 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-full p-2.5 shadow-lg text-gray-700 dark:text-gray-300 hover:text-amberAccent transition"
-        title="Toggle Theme"
-      >
+      <button @click="toggleTheme()" class="bg-cardBgLight/80 dark:bg-cardBgDark/80 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-full p-2.5 shadow-lg transition hover:border-amberAccent/50">
         <template x-if="darkMode">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
         </template>
         <template x-if="!darkMode">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
         </template>
       </button>
-
-      <a
-        href="onboard.html"
-        class="bg-cardBgLight/90 dark:bg-cardBgDark/90 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark hover:border-amberAccent/60 rounded-full px-5 py-2.5 shadow-lg text-xs font-mono font-semibold flex items-center gap-2 text-gray-800 dark:text-gray-100 transition"
-      >
+      <a href="onboard.html" class="bg-cardBgLight/90 dark:bg-cardBgDark/90 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark hover:border-amberAccent/60 rounded-full px-5 py-2.5 shadow-lg text-xs font-mono font-semibold flex items-center gap-2 text-gray-800 dark:text-gray-100 transition">
         <i data-lucide="arrow-left" class="w-4 h-4 text-amberAccent"></i>
         Back to Gateway
       </a>
     </div>
   </header>
 
-  <!-- MAIN FAUCET CONTAINER -->
-  <main class="relative z-10 pt-32 pb-20 px-4 max-w-3xl mx-auto w-full space-y-8">
+  <main class="relative z-10 pt-32 pb-20 px-4 max-w-2xl mx-auto w-full space-y-6">
 
-    <!-- WELCOME BANNER & 3D SCALE CONTAINER -->
-    <div class="text-center space-y-4">
-
-      <!-- 3D Scale Canvas -->
-      <div class="relative w-full h-48 flex items-center justify-center overflow-hidden">
-        <div id="scale-canvas-wrapper" class="w-full h-full"></div>
-      </div>
-
-      <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-amberAccent/30 bg-amberGlow text-amberAccent text-xs font-mono shadow-sm animate-float">
+    <!-- Header -->
+    <div class="text-center space-y-3">
+      <div id="scale-canvas-wrapper" class="w-full h-40"></div>
+      <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-amberAccent/30 bg-amberGlow text-amberAccent text-xs font-mono animate-float">
         &#127963; JUDGE &amp; EVALUATOR TESTNET FAUCET
       </div>
-
-      <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-        Welcome to the Eunomia Faucet
-      </h1>
-
-      <p class="text-xs sm:text-sm text-subtleTextLight dark:text-subtleTextDark max-w-xl mx-auto leading-relaxed">
-        Claim testnet assets and protocol $EUN tokens instantly to test forensics submission, court report generation, and automated DAO voting workflows.
+      <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Welcome to the Eunomia Faucet</h1>
+      <p class="text-xs sm:text-sm text-subtleTextLight dark:text-subtleTextDark max-w-lg mx-auto leading-relaxed">
+        Claim testnet tokens instantly to start testing forensics submission, DAO voting, and court report workflows.
       </p>
     </div>
 
-    <!-- FAUCET FLOW CARD -->
-    <div class="metallic-card bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 sm:p-8 space-y-8 relative overflow-hidden">
-
-      <!-- STEP 1: NETWORK SELECTION -->
-      <div class="space-y-3">
-        <div class="flex items-center justify-between">
-          <label class="text-xs font-mono font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <span class="w-5 h-5 rounded-full bg-amberAccent/20 text-amberAccent flex items-center justify-center text-[11px]">1</span>
-            SELECT TARGET TESTNET
-          </label>
-          <span class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">Network Chain ID</span>
+    <!-- What you get -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="metallic-card bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-xl p-4 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-amberGlow border border-amberAccent/30 flex items-center justify-center shrink-0">
+          <i data-lucide="coins" class="w-4 h-4 text-amberAccent"></i>
         </div>
+        <div>
+          <div class="text-sm font-bold text-gray-900 dark:text-white">150 $EUN</div>
+          <div class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">Protocol Token</div>
+        </div>
+      </div>
+      <div class="metallic-card bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-xl p-4 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-amberGlow border border-amberAccent/30 flex items-center justify-center shrink-0">
+          <i data-lucide="layers" class="w-4 h-4 text-amberAccent"></i>
+        </div>
+        <div>
+          <div class="text-sm font-bold text-gray-900 dark:text-white">0.01 ETH</div>
+          <div class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">Sepolia Gas</div>
+        </div>
+      </div>
+    </div>
 
+    <!-- Claim card -->
+    <div class="metallic-card bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 sm:p-8 space-y-6">
+
+      <!-- Step 1: Network (Sepolia only for now) -->
+      <div class="space-y-3">
+        <label class="text-xs font-mono font-bold flex items-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-amberAccent/20 text-amberAccent flex items-center justify-center text-[11px]">1</span>
+          NETWORK
+        </label>
         <div class="grid grid-cols-2 gap-3">
-          <button
-            @click="selectedNetwork = 'sepolia'; validateAddress()"
-            :class="selectedNetwork === 'sepolia' ? 'border-amberAccent bg-amberGlow/30 text-amberAccent font-bold' : 'border-cardBorderLight dark:border-cardBorderDark bg-gray-50 dark:bg-zinc-900 text-gray-600 dark:text-gray-400'"
-            class="p-4 rounded-xl border flex flex-col items-center gap-2 transition text-center hover:border-amberAccent/60"
-          >
+          <button class="p-4 rounded-xl border border-amberAccent bg-amberGlow/30 text-amberAccent font-bold flex flex-col items-center gap-1.5 text-center">
             <i data-lucide="layers" class="w-5 h-5"></i>
             <span class="text-xs font-mono">Ethereum Sepolia</span>
-            <span class="text-[9px] font-mono opacity-60">Sepolia Testnet</span>
+            <span class="text-[9px] font-mono opacity-70">Active</span>
           </button>
-
-          <button
-            @click="selectedNetwork = 'solana'; validateAddress()"
-            :class="selectedNetwork === 'solana' ? 'border-amberAccent bg-amberGlow/30 text-amberAccent font-bold' : 'border-cardBorderLight dark:border-cardBorderDark bg-gray-50 dark:bg-zinc-900 text-gray-600 dark:text-gray-400'"
-            class="p-4 rounded-xl border flex flex-col items-center gap-2 transition text-center hover:border-amberAccent/60"
-          >
+          <button disabled class="p-4 rounded-xl border border-cardBorderLight dark:border-cardBorderDark bg-gray-50 dark:bg-zinc-900 text-gray-400 dark:text-zinc-600 flex flex-col items-center gap-1.5 text-center cursor-not-allowed opacity-50">
             <i data-lucide="zap" class="w-5 h-5"></i>
             <span class="text-xs font-mono">Solana Devnet</span>
-            <span class="text-[9px] font-mono opacity-60">Devnet Cluster</span>
+            <span class="text-[9px] font-mono">Coming Soon</span>
           </button>
         </div>
       </div>
 
-      <!-- STEP 2: WALLET ADDRESS -->
+      <!-- Step 2: Wallet address -->
       <div class="space-y-3 pt-4 border-t border-cardBorderLight dark:border-cardBorderDark">
-        <label class="text-xs font-mono font-bold text-gray-900 dark:text-white flex items-center justify-between">
+        <label class="text-xs font-mono font-bold flex items-center justify-between">
           <span class="flex items-center gap-2">
             <span class="w-5 h-5 rounded-full bg-amberAccent/20 text-amberAccent flex items-center justify-center text-[11px]">2</span>
-            DESTINATION WALLET ADDRESS
+            WALLET ADDRESS
           </span>
-          <span x-text="selectedNetwork === 'sepolia' ? 'EVM Address Required' : 'Solana Base58 Required'" class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark"></span>
+          <span class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">EVM / 0x format</span>
         </label>
 
         <div class="relative">
           <input
             type="text"
             x-model="walletAddress"
-            @input="validateAddress()"
-            :placeholder="selectedNetwork === 'sepolia' ? '0x...' : 'Base58 wallet public key...'"
-            class="w-full bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark rounded-xl px-4 py-3 text-xs font-mono focus:outline-none focus:border-amberAccent text-gray-900 dark:text-white transition"
+            @input="validate()"
+            placeholder="0x..."
+            class="w-full bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark rounded-xl px-4 py-3 pr-10 text-xs font-mono focus:outline-none focus:border-amberAccent text-gray-900 dark:text-white transition"
+            :class="addressStatus === 'valid' ? 'border-emerald-500/60' : (addressStatus === 'invalid' ? 'border-red-500/60' : '')"
           />
-          <div class="absolute right-3 top-3 flex items-center gap-1">
+          <div class="absolute right-3 top-3">
             <template x-if="addressStatus === 'valid'">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
             </template>
-            <template x-if="addressStatus === 'mismatch' || addressStatus === 'invalid'">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-amberAccent animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            <template x-if="addressStatus === 'invalid'">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
             </template>
           </div>
         </div>
 
-        <template x-if="validationMessage">
-          <div
-            :class="{
-              'bg-emerald-500/10 border-emerald-500/40 text-emerald-500': addressStatus === 'valid',
-              'bg-red-500/10 border-red-500/40 text-red-500 font-bold': addressStatus === 'mismatch',
-              'bg-amber-500/10 border-amber-500/40 text-amber-500': addressStatus === 'invalid'
-            }"
-            class="p-3 rounded-xl border text-xs font-mono flex items-center gap-2"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-            <span x-text="validationMessage"></span>
-          </div>
+        <template x-if="addressStatus === 'invalid'">
+          <p class="text-[11px] font-mono text-red-500">Invalid EVM address — must start with 0x (42 chars total).</p>
         </template>
       </div>
 
-      <!-- STEP 3: GAS CHECK -->
-      <div x-show="addressStatus === 'valid'" x-transition class="space-y-4 pt-4 border-t border-cardBorderLight dark:border-cardBorderDark">
-        <label class="text-xs font-mono font-bold text-gray-900 dark:text-white flex items-center gap-2">
+      <!-- Step 3: Claim -->
+      <div class="pt-4 border-t border-cardBorderLight dark:border-cardBorderDark space-y-4">
+        <label class="text-xs font-mono font-bold flex items-center gap-2">
           <span class="w-5 h-5 rounded-full bg-amberAccent/20 text-amberAccent flex items-center justify-center text-[11px]">3</span>
-          GAS TOKEN CHECK
+          CLAIM TOKENS
         </label>
 
-        <div class="bg-gray-50 dark:bg-zinc-900 p-4 rounded-xl border border-cardBorderLight dark:border-cardBorderDark space-y-3">
-          <p class="text-xs text-gray-700 dark:text-gray-300">
-            Do you already have testnet gas tokens (<span class="font-mono text-amberAccent" x-text="selectedNetwork === 'sepolia' ? 'Sepolia ETH' : 'Devnet SOL'"></span>) in this wallet?
-          </p>
-
-          <div class="flex gap-3">
-            <button
-              @click="hasGas = true"
-              :class="hasGas === true ? 'bg-amberAccent text-black font-bold' : 'bg-gray-200 dark:bg-zinc-800 text-gray-700 dark:text-gray-300'"
-              class="px-4 py-2 rounded-lg text-xs font-mono transition"
-            >
-              Yes, I have Gas
-            </button>
-            <button
-              @click="hasGas = false"
-              :class="hasGas === false ? 'bg-amberAccent text-black font-bold' : 'bg-gray-200 dark:bg-zinc-800 text-gray-700 dark:text-gray-300'"
-              class="px-4 py-2 rounded-lg text-xs font-mono transition"
-            >
-              No, I need Gas
-            </button>
+        <!-- Error -->
+        <template x-if="claimError">
+          <div class="p-3 rounded-xl border border-red-500/40 bg-red-500/10 text-red-500 text-xs font-mono flex items-start gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            <span x-text="claimError"></span>
           </div>
+        </template>
 
-          <div x-show="hasGas === false" x-transition class="pt-3 border-t border-cardBorderLight dark:border-cardBorderDark space-y-3">
-            <p class="text-[11px] text-subtleTextLight dark:text-subtleTextDark">
-              For testnet gas, use the official faucet for your network:
-            </p>
-            <div class="flex flex-col gap-2">
-              <a
-                x-show="selectedNetwork === 'sepolia'"
-                href="https://sepoliafaucet.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn-white-metallic text-xs font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 w-fit"
-              >
-                <i data-lucide="external-link" class="w-4 h-4 text-amberAccent"></i>
-                Get Sepolia ETH &rarr; sepoliafaucet.com
-              </a>
-              <a
-                x-show="selectedNetwork === 'solana'"
-                href="https://faucet.solana.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn-white-metallic text-xs font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 w-fit"
-              >
-                <i data-lucide="external-link" class="w-4 h-4 text-amberAccent"></i>
-                Get Devnet SOL &rarr; faucet.solana.com
-              </a>
-            </div>
-            <p class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">Once you have gas, select &ldquo;Yes, I have Gas&rdquo; above to continue.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- STEP 4: CLAIM $EUN -->
-      <div x-show="addressStatus === 'valid' && hasGas !== null" x-transition class="space-y-4 pt-4 border-t border-cardBorderLight dark:border-cardBorderDark">
-        <label class="text-xs font-mono font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <span class="w-5 h-5 rounded-full bg-amberAccent/20 text-amberAccent flex items-center justify-center text-[11px]">4</span>
-          CLAIM EUNOMIA TEST TOKENS ($EUN)
-        </label>
-
-        <div class="bg-amberGlow/20 border border-amberAccent/30 p-5 rounded-xl space-y-4">
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="text-sm font-bold text-gray-900 dark:text-white">100.00 $EUN</div>
-              <div class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">Judge Protocol Allocation</div>
-            </div>
-            <span class="text-[10px] font-mono bg-amberAccent/20 text-amberAccent px-2.5 py-1 rounded-full font-bold">READY TO DRIP</span>
-          </div>
-
-          <button
-            @click="claimEunTokens()"
-            :disabled="isClaimingEun || eunClaimed"
-            class="w-full btn-white-metallic text-xs font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            <i data-lucide="coins" class="w-4 h-4 text-amberAccent"></i>
-            <span x-text="isClaimingEun ? 'Executing Smart Contract Distribution...' : (eunClaimed ? '100 $EUN Claimed Successfully \u2713' : 'Claim 100 $EUN Test Tokens')"></span>
-          </button>
-
-          <template x-if="eunClaimed">
-            <div class="p-3 rounded-lg bg-black/60 border border-cardBorderLight dark:border-cardBorderDark text-[11px] font-mono space-y-1 text-gray-300">
-              <div class="flex justify-between text-emerald-400 font-bold">
-                <span>Distribution Status: Confirmed</span>
-                <span>Block #1849201</span>
-              </div>
-              <div class="flex justify-between text-gray-400">
-                <span>Tx Hash:</span>
-                <span class="text-amberAccent font-bold" x-text="claimTxHash"></span>
-              </div>
-            </div>
+        <!-- Claim button -->
+        <button
+          x-show="!claimed"
+          @click="claim()"
+          :disabled="addressStatus !== 'valid' || isClaiming"
+          class="btn-amber-metallic w-full py-3.5 rounded-xl font-mono text-sm font-bold flex items-center justify-center gap-2"
+        >
+          <template x-if="!isClaiming">
+            <span class="flex items-center gap-2">
+              <i data-lucide="coins" class="w-4 h-4"></i>
+              Claim 150 $EUN + 0.01 ETH
+            </span>
           </template>
-        </div>
-      </div>
+          <template x-if="isClaiming">
+            <span class="flex items-center gap-2">
+              <svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+              Broadcasting to Sepolia...
+            </span>
+          </template>
+        </button>
 
+        <!-- Success -->
+        <template x-if="claimed">
+          <div class="space-y-3">
+            <div class="flex items-center gap-2 text-emerald-500 font-bold text-sm font-mono">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+              Tokens Distributed Successfully
+            </div>
+            <div class="bg-black/40 dark:bg-black/60 border border-cardBorderLight dark:border-zinc-800 rounded-xl p-4 space-y-3 font-mono text-xs">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-subtleTextLight dark:text-subtleTextDark shrink-0">ETH Tx:</span>
+                <a :href="'https://sepolia.etherscan.io/tx/' + ethTxHash" target="_blank" rel="noopener" class="text-amberAccent hover:underline truncate" x-text="ethTxHash.slice(0,12) + '...' + ethTxHash.slice(-8)"></a>
+              </div>
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-subtleTextLight dark:text-subtleTextDark shrink-0">$EUN Tx:</span>
+                <a :href="'https://sepolia.etherscan.io/tx/' + eunTxHash" target="_blank" rel="noopener" class="text-amberAccent hover:underline truncate" x-text="eunTxHash.slice(0,12) + '...' + eunTxHash.slice(-8)"></a>
+              </div>
+              <div class="pt-2 border-t border-zinc-800 text-subtleTextLight dark:text-subtleTextDark text-[10px]">
+                One-time claim recorded. Tokens may take 15–30s to appear in your wallet.
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <p class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark text-center">
+          One claim per wallet address &bull; Sepolia testnet only &bull; For protocol testing
+        </p>
+      </div>
     </div>
   </main>
 
-  <!-- FOOTER -->
-  <footer class="relative z-10 border-t border-cardBorderLight dark:border-cardBorderDark py-6 px-6 text-center text-[11px] font-mono text-subtleTextLight dark:text-subtleTextDark">
-    Eunomia Network &copy; 2026 // Judge Testnet Faucet Infrastructure
+  <footer class="relative z-10 border-t border-cardBorderLight dark:border-cardBorderDark py-5 px-6 text-center text-[11px] font-mono text-subtleTextLight dark:text-subtleTextDark">
+    Eunomia Network &copy; 2026 // Judge Testnet Faucet
   </footer>
 
   <script>
-    // Alpine component — reads theme from localStorage, matches rest of site
     document.addEventListener('alpine:init', () => {
       Alpine.data('faucetState', () => ({
-        darkMode: localStorage.getItem('eunomia-theme') !== 'light',
-        selectedNetwork: 'sepolia',
+        darkMode:      localStorage.getItem('eunomia-theme') !== 'light',
         walletAddress: '',
-        addressStatus: 'idle',
-        validationMessage: '',
-        hasGas: null,
-        isClaimingEun: false,
-        eunClaimed: false,
-        claimTxHash: '',
+        addressStatus: 'idle', // idle | valid | invalid
+        isClaiming:    false,
+        claimed:       false,
+        claimError:    '',
+        ethTxHash:     '',
+        eunTxHash:     '',
 
         toggleTheme() {
           this.darkMode = !this.darkMode;
@@ -313,42 +256,52 @@
           localStorage.setItem('eunomia-theme', this.darkMode ? 'dark' : 'light');
         },
 
-        validateAddress() {
+        validate() {
           const addr = this.walletAddress.trim();
-          if (!addr) { this.addressStatus = 'idle'; this.validationMessage = ''; return; }
-
-          const isEvm     = /^0x[a-fA-F0-9]{40}$/.test(addr);
-          const isSolana  = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(addr);
-
-          if (this.selectedNetwork === 'sepolia') {
-            if (isEvm)        { this.addressStatus = 'valid';    this.validationMessage = 'Verified Ethereum Sepolia Address'; }
-            else if (isSolana){ this.addressStatus = 'mismatch'; this.validationMessage = 'WARNING: Solana address detected — Ethereum Sepolia is selected!'; }
-            else              { this.addressStatus = 'invalid';  this.validationMessage = 'Invalid EVM address. Must start with 0x (42 chars).'; }
-          } else {
-            if (isSolana)     { this.addressStatus = 'valid';    this.validationMessage = 'Verified Solana Devnet Address'; }
-            else if (isEvm)   { this.addressStatus = 'mismatch'; this.validationMessage = 'WARNING: EVM address detected — Solana Devnet is selected!'; }
-            else              { this.addressStatus = 'invalid';  this.validationMessage = 'Invalid Solana address. Base58 string expected.'; }
-          }
+          if (!addr) { this.addressStatus = 'idle'; return; }
+          this.addressStatus = /^0x[a-fA-F0-9]{40}$/.test(addr) ? 'valid' : 'invalid';
         },
 
-        claimEunTokens() {
-          this.isClaimingEun = true;
-          setTimeout(() => {
-            this.isClaimingEun = false;
-            this.eunClaimed    = true;
-            this.claimTxHash   = this.selectedNetwork === 'sepolia' ? '0x7f9a...3b21' : '5K2b...8Nx9';
-          }, 2200);
-        }
+        async claim() {
+          if (this.addressStatus !== 'valid' || this.isClaiming) return;
+          this.isClaiming = true;
+          this.claimError = '';
+
+          try {
+            const res = await fetch(
+              'https://olbklffxzqfqyfbmrmrk.supabase.co/functions/v1/faucet-claim',
+              {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ walletAddress: this.walletAddress.trim() }),
+              }
+            );
+            const data = await res.json();
+
+            if (!res.ok) {
+              this.claimError = data.error || 'Claim failed. Please try again.';
+              return;
+            }
+
+            this.claimed    = true;
+            this.ethTxHash  = data.ethTxHash;
+            this.eunTxHash  = data.eunTxHash;
+
+          } catch {
+            this.claimError = 'Network error. Check your connection and try again.';
+          } finally {
+            this.isClaiming = false;
+          }
+        },
       }));
     });
 
-    // Init Lucide icons once — x-if templates use inline SVGs so no re-init needed
     lucide.createIcons();
 
     // 3D scale of justice
     (function init3DScale() {
       const container = document.getElementById('scale-canvas-wrapper');
-      if (!container) return;
+      if (!container || container.clientWidth === 0) return;
 
       const scene    = new THREE.Scene();
       const camera   = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
@@ -359,8 +312,8 @@
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       container.appendChild(renderer.domElement);
 
-      const scaleGroup  = new THREE.Group();
-      const mat = new THREE.MeshBasicMaterial({ color: 0x888888, wireframe: true, transparent: true, opacity: 0.65 });
+      const mat = new THREE.MeshBasicMaterial({ color: 0x888888, wireframe: true, transparent: true, opacity: 0.6 });
+      const g   = new THREE.Group();
 
       const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.08, 2.2, 16), mat);
       const base   = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 0.1, 24), mat);
@@ -368,21 +321,19 @@
       const beam   = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.05, 0.05), mat);
       beam.position.y = 0.8;
       const panGeo = new THREE.ConeGeometry(0.4, 0.2, 16);
-      const leftPan  = new THREE.Mesh(panGeo, mat);
-      leftPan.rotation.x  = Math.PI; leftPan.position.set(-1.0, 0.2, 0);
-      const rightPan = new THREE.Mesh(panGeo, mat);
-      rightPan.rotation.x = Math.PI; rightPan.position.set(1.0,  0.2, 0);
+      const lPan   = new THREE.Mesh(panGeo, mat); lPan.rotation.x = Math.PI; lPan.position.set(-1, 0.2, 0);
+      const rPan   = new THREE.Mesh(panGeo, mat); rPan.rotation.x = Math.PI; rPan.position.set(1,  0.2, 0);
 
-      scaleGroup.add(pillar, base, beam, leftPan, rightPan);
-      scene.add(scaleGroup);
+      g.add(pillar, base, beam, lPan, rPan);
+      scene.add(g);
 
-      gsap.to(scaleGroup.rotation, { y: Math.PI * 2, duration: 25, repeat: -1, ease: 'none' });
-      // Fixed: GSAP 3 ease syntax (sine.inOut, not sine.easeInOut)
+      gsap.to(g.rotation, { y: Math.PI * 2, duration: 25, repeat: -1, ease: 'none' });
       gsap.to(beam.rotation, { z: 0.08, duration: 3, yoyo: true, repeat: -1, ease: 'sine.inOut' });
 
       (function animate() { requestAnimationFrame(animate); renderer.render(scene, camera); })();
 
       window.addEventListener('resize', () => {
+        if (!container.clientWidth) return;
         camera.aspect = container.clientWidth / container.clientHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(container.clientWidth, container.clientHeight);
