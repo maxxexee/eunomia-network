@@ -108,15 +108,13 @@ function createAuthState() {
     walletData: null,
     walletLoading: false,
 
-    // Email OTP flow
-    authMode: 'choose', // 'choose' | 'email' | 'otp'
+    // Email magic link flow
+    authMode: 'choose', // 'choose' | 'magiclink-sent'
     emailInput: '',
-    otpInput: '',
     otpSent: false,
     otpError: '',
     authError: '',
     isSendingOtp: false,
-    isVerifyingOtp: false,
     isGoogleLoading: false,
 
     // Computed
@@ -145,17 +143,30 @@ function createAuthState() {
         return;
       }
       try {
+        // Handle magic link redirect — extract tokens from URL hash
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        if (hashParams.get('access_token')) {
+          // Tokens exist in URL — Supabase will pick them up via setSession
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+
         const { data: { session } } = await _supabaseClient.auth.getSession();
         if (session?.user) {
           this.user = session.user;
           this.isAuthenticated = true;
+          this.authModalOpen = false;
           await this.ensureWallet();
         }
         _supabaseClient.auth.onAuthStateChange(async (event, session) => {
           if (session?.user) {
             this.user = session.user;
             this.isAuthenticated = true;
+            this.authModalOpen = false;
             await this.ensureWallet();
+            // Redirect to onboard after magic link sign-in
+            if (event === 'SIGNED_IN' && !window.location.pathname.includes('onboard')) {
+              window.location.href = '/onboard.html';
+            }
           } else {
             this.user = null;
             this.isAuthenticated = false;
@@ -204,8 +215,8 @@ function createAuthState() {
       }
     },
 
-    // Email OTP — send code
-    async sendOtp() {
+    // Email — send magic link
+    async sendMagicLink() {
       if (!_supabaseClient || !this.emailInput) return;
       const email = this.emailInput.trim();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -218,48 +229,22 @@ function createAuthState() {
       try {
         const { error } = await _supabaseClient.auth.signInWithOtp({
           email,
-          options: { 
+          options: {
             shouldCreateUser: true,
             emailRedirectTo: 'https://eunomia-protocol.netlify.app/onboard.html'
           }
         });
         if (error) throw error;
         this.otpSent = true;
-        this.authMode = 'otp';
+        this.authMode = 'magiclink-sent';
       } catch (e) {
-        this.otpError = e.message || 'Failed to send code';
+        this.otpError = e.message || 'Failed to send magic link';
       } finally {
         this.isSendingOtp = false;
       }
     },
 
-    // Email OTP — verify code
-    async verifyOtp() {
-      if (!_supabaseClient || !this.otpInput || !this.emailInput) return;
-      this.isVerifyingOtp = true;
-      this.otpError = '';
-      this.authError = '';
-      try {
-        const { data, error } = await _supabaseClient.auth.verifyOtp({
-          email: this.emailInput.trim(),
-          token: this.otpInput.trim(),
-          type: 'email'
-        });
-        if (error) throw error;
-        if (data?.session) {
-          this.user = data.session.user;
-          this.isAuthenticated = true;
-          this.authModalOpen = false;
-          window.location.href = 'onboard.html';
-        }
-      } catch (e) {
-        this.otpError = e.message || 'Invalid code. Please try again.';
-      } finally {
-        this.isVerifyingOtp = false;
-      }
-    },
-
-    // Reset OTP flow
+    // Reset email flow
     resetOtpFlow() {
       this.authMode = 'choose';
       this.emailInput = '';
