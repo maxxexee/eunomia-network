@@ -107,6 +107,7 @@ function createAuthState() {
     walletAddress: '',
     walletData: null,
     walletLoading: false,
+    showWalletModal: false,
 
     // Email magic link flow
     authMode: 'choose', // 'choose' | 'magiclink-sent'

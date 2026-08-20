@@ -5,12 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Eunomia Network // Operational Gateway</title>
 
-  <!-- Theme init FIRST — prevents flash of wrong theme -->
   <script src="js/theme-init.js"></script>
-
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/tailwind.config.js"></script>
-
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Auth check — redirect to home if not signed in -->
@@ -31,7 +28,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- auth.js registers alpine:init before Alpine runs -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
   <script src="js/auth.js"></script>
@@ -45,13 +41,8 @@
 
   <style>
     .perspective-container { perspective: 1200px; }
-
-    .metallic-card {
-      transform-style: preserve-3d;
-      will-change: transform;
-    }
+    .metallic-card { transform-style: preserve-3d; will-change: transform; }
     .card-content-3d { transform: translateZ(25px); }
-
     .btn-amber-metallic {
       background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
       color: #FFFFFF;
@@ -63,6 +54,8 @@
       box-shadow: 0 6px 25px rgba(217,119,6,0.35);
       transform: translateY(-2px);
     }
+    .copy-flash { animation: flashGreen 0.6s ease; }
+    @keyframes flashGreen { 0%{color:#10B981} 100%{color:inherit} }
   </style>
 </head>
 
@@ -83,17 +76,12 @@
       </span>
     </div>
     <div class="flex items-center gap-3">
-      <!-- Theme toggle — persists back to localStorage -->
-      <button
-        @click="toggleTheme()"
-        class="bg-cardBgLight/80 dark:bg-cardBgDark/80 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-full p-2.5 shadow-md text-gray-700 dark:text-gray-300 hover:text-amberAccent transition"
-        title="Toggle Theme"
-      >
-        <template x-if="darkMode"><i data-lucide="sun" class="w-4 h-4 text-amberAccent"></i></template>
-        <template x-if="!darkMode"><i data-lucide="moon" class="w-4 h-4 text-gray-800"></i></template>
+      <button @click="toggleTheme()" class="bg-cardBgLight/80 dark:bg-cardBgDark/80 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-full p-2.5 shadow-md text-gray-700 dark:text-gray-300 hover:text-amberAccent transition" title="Toggle Theme">
+        <template x-if="darkMode"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></template>
+        <template x-if="!darkMode"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></template>
       </button>
 
-      <!-- User badge — reads from Supabase auth -->
+      <!-- User badge -->
       <div class="bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-full px-4 py-2 shadow-md text-xs font-mono font-semibold flex items-center gap-3 text-gray-800 dark:text-gray-100">
         <template x-if="isAuthenticated">
           <div class="flex items-center gap-2">
@@ -108,16 +96,11 @@
               Online
             </span>
             <span class="text-cardBorderDark dark:text-zinc-700">|</span>
-            <span class="text-amberAccent font-bold" x-text="walletAddress ? walletAddress.slice(0,6) + '...' + walletAddress.slice(-4) : 'Loading...'"></span>
-            <span class="text-cardBorderDark dark:text-zinc-700">|</span>
-            <span class="text-amberAccent font-bold">100 $EU</span>
-            <span class="text-cardBorderDark dark:text-zinc-700">|</span>
             <span x-text="userDisplayName"></span>
           </div>
         </template>
         <template x-if="!isAuthenticated && !authLoading">
           <a href="/" class="flex items-center gap-2 text-amberAccent hover:underline">
-            <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
             Sign In Required
           </a>
         </template>
@@ -126,202 +109,314 @@
   </header>
 
   <!-- MAIN -->
-  <main class="max-w-6xl mx-auto px-6 py-12 flex-1 flex flex-col justify-center items-center w-full z-10 perspective-container relative">
+  <main class="max-w-5xl mx-auto px-6 py-12 flex-1 flex flex-col w-full z-10 perspective-container relative">
 
-    <div class="text-center max-w-2xl mb-12 space-y-3 z-10">
+    <!-- Welcome Header -->
+    <div class="text-center mb-10 space-y-3 z-10">
       <div id="badge" class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-amberAccent/30 bg-amberGlow text-amberAccent text-xs font-mono shadow-xs opacity-0 backdrop-blur-md">
         ✦ Authenticated Session Connected
       </div>
-      <h1 id="title" class="text-3xl sm:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-tight opacity-0">
-        Select Operational Workspace
+      <h1 id="title" class="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-tight opacity-0">
+        Welcome, <span class="text-amberAccent" x-text="userDisplayName"></span>
       </h1>
       <p id="subtitle" class="text-subtleTextLight dark:text-subtleTextDark text-xs sm:text-sm max-w-lg mx-auto leading-relaxed font-sans opacity-0">
-        Route your wallet credentials into threat hunter submission, quorum consensus voting, or BLI-certified legal forensics generation.
+        Your wallet is ready. Start exploring threat forensics, DAO governance, or legal dispute resolution.
       </p>
-      <a href="faucet.html" id="faucet-link" class="inline-flex items-center gap-1 text-[11px] font-mono text-subtleTextLight dark:text-subtleTextDark hover:text-amberAccent dark:hover:text-amberAccent transition opacity-0">
-        Get test tokens to interact with protocol <i data-lucide="arrow-right" class="w-3 h-3 ml-0.5"></i>
-      </a>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full z-10">
+    <!-- WALLET DASHBOARD — First thing judges see -->
+    <div class="metallic-card bg-cardBgLight/90 dark:bg-cardBgDark/90 backdrop-blur-md border border-amberAccent/30 rounded-2xl p-6 sm:p-8 mb-8 opacity-0 z-10" id="wallet-card">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amberGlow border border-amberAccent/30 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-gray-900 dark:text-white">Your Eunomia Wallet</h3>
+            <p class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">Auto-generated on sign-in • Ethereum Sepolia</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Active
+          </span>
+        </div>
+      </div>
+
+      <!-- Wallet Address -->
+      <div class="bg-gray-50 dark:bg-zinc-900/80 border border-cardBorderLight dark:border-cardBorderDark rounded-xl p-4 mb-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark uppercase tracking-wider">Wallet Address</span>
+          <button @click="copyAddress()" class="text-[10px] font-mono text-amberAccent hover:underline flex items-center gap-1 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            <span x-text="copiedAddress ? 'Copied!' : 'Copy'"></span>
+          </button>
+        </div>
+        <div class="font-mono text-xs sm:text-sm text-gray-900 dark:text-white break-all" x-text="walletAddress || 'Generating...'"></div>
+      </div>
+
+      <!-- Balances -->
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="bg-gray-50 dark:bg-zinc-900/80 border border-cardBorderLight dark:border-cardBorderDark rounded-xl p-4">
+          <span class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark uppercase tracking-wider block mb-1">ETH Balance</span>
+          <span class="text-lg font-bold text-gray-900 dark:text-white">0.00 <span class="text-xs font-normal text-subtleTextLight dark:text-subtleTextDark">ETH</span></span>
+        </div>
+        <div class="bg-gray-50 dark:bg-zinc-900/80 border border-cardBorderLight dark:border-cardBorderDark rounded-xl p-4">
+          <span class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark uppercase tracking-wider block mb-1">$EU Balance</span>
+          <span class="text-lg font-bold text-amberAccent">100 <span class="text-xs font-normal text-subtleTextLight dark:text-subtleTextDark">$EU</span></span>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="flex flex-col sm:flex-row gap-3">
+        <a href="faucet.html" class="flex-1 btn-amber-metallic py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m7 10 5 5 5-5"/></svg>
+          Get Test Tokens (Faucet)
+        </a>
+        <button @click="showWalletModal = true" class="flex-1 bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2 text-gray-700 dark:text-gray-300 hover:border-amberAccent/40 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Wallet Settings
+        </button>
+      </div>
+    </div>
+
+    <!-- ENS SECTION — Optional, not blocking -->
+    <div class="metallic-card bg-cardBgLight/85 dark:bg-cardBgDark/85 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 mb-8 opacity-0 z-10" id="ens-card">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amberAccent/10 border border-amberAccent/30 flex items-center justify-center shrink-0 mt-0.5">
+            <svg class="w-5 h-5 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-1">Register Your ENS Name</h3>
+            <p class="text-[11px] text-subtleTextLight dark:text-subtleTextDark leading-relaxed">
+              Claim a human-readable <code class="text-amberAccent">.eth</code> identity on Sepolia testnet. 
+              <span class="text-subtleTextLight/60 dark:text-subtleTextDark/60">Requires MetaMask + Sepolia ETH. Optional for demo.</span>
+            </p>
+          </div>
+        </div>
+        <button @click="ensVisible = true" x-show="ensRegistrations.length === 0" class="shrink-0 bg-amberAccent/10 border border-amberAccent/30 text-amberAccent font-mono text-[10px] font-bold px-3 py-1.5 rounded-lg hover:bg-amberAccent/20 transition">
+          Register →
+        </button>
+        <div x-show="ensRegistrations.length > 0" class="shrink-0 text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-lg flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+          Registered
+        </div>
+      </div>
+    </div>
+
+    <!-- WORKSPACE CARDS -->
+    <div class="text-center mb-6 z-10">
+      <h2 class="text-lg font-bold text-gray-900 dark:text-white">Select Workspace</h2>
+      <p class="text-[11px] font-mono text-subtleTextLight dark:text-subtleTextDark">Choose a module to begin</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full z-10">
 
       <!-- Threat Hunter -->
-      <div class="metallic-card workspace-card bg-cardBgLight/85 dark:bg-cardBgDark/85 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-8 flex flex-col justify-between opacity-0 hover:border-amberAccent/40">
+      <div class="metallic-card workspace-card bg-cardBgLight/85 dark:bg-cardBgDark/85 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 flex flex-col justify-between opacity-0 hover:border-amberAccent/40 transition-all">
         <div class="card-content-3d">
-          <div class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark flex items-center justify-center text-amberAccent mb-6">
-            <i data-lucide="crosshair" class="w-6 h-6"></i>
+          <div class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark flex items-center justify-center text-amberAccent mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
           </div>
-          <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Threat Hunter Terminal</h2>
-          <p class="text-xs text-subtleTextLight dark:text-subtleTextDark leading-relaxed mb-6 font-sans">
-            Locate, analyze, and submit malicious smart contracts or exploit vectors. Run client-side static checks and stake $EU collateral.
+          <h2 class="text-sm font-bold text-gray-900 dark:text-white mb-2">Threat Hunter Terminal</h2>
+          <p class="text-[11px] text-subtleTextLight dark:text-subtleTextDark leading-relaxed mb-4">
+            Locate, analyze, and submit malicious smart contracts or exploit vectors.
           </p>
-          <ul class="space-y-2.5 mb-8 font-mono text-xs text-gray-700 dark:text-gray-300">
-            <li class="flex items-center gap-2"><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-amberAccent"></i> $EU Collateral Staking</li>
-            <li class="flex items-center gap-2"><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-amberAccent"></i> Automated Telemetry Scan</li>
-            <li class="flex items-center gap-2 text-subtleTextLight dark:text-subtleTextDark"><i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-40"></i> Status: Ready for Payload</li>
+          <ul class="space-y-2 mb-6 font-mono text-[11px] text-gray-700 dark:text-gray-300">
+            <li class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-amberAccent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg> $EU Collateral Staking</li>
+            <li class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-amberAccent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg> Automated Telemetry Scan</li>
           </ul>
         </div>
-        <button @click="completeWorkspaceSelection()" class="btn-white-metallic card-content-3d w-full py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2">
+        <button @click="completeWorkspaceSelection()" class="btn-white-metallic card-content-3d w-full py-2.5 rounded-xl font-mono text-[11px] font-bold flex items-center justify-center gap-2">
           <span>LAUNCH TERMINAL</span>
-          <i data-lucide="arrow-right" class="w-4 h-4 text-amberAccent"></i>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </button>
       </div>
 
       <!-- DAO Governance -->
-      <div class="metallic-card workspace-card bg-cardBgLight/85 dark:bg-cardBgDark/85 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-8 flex flex-col justify-between opacity-0 hover:border-amberAccent/40">
+      <div class="metallic-card workspace-card bg-cardBgLight/85 dark:bg-cardBgDark/85 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 flex flex-col justify-between opacity-0 hover:border-amberAccent/40 transition-all">
         <div class="card-content-3d">
-          <div class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark flex items-center justify-center text-amberAccent mb-6">
-            <i data-lucide="landmark" class="w-6 h-6"></i>
+          <div class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark flex items-center justify-center text-amberAccent mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
           </div>
-          <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-2">DAO Governance Quorum</h2>
-          <p class="text-xs text-subtleTextLight dark:text-subtleTextDark leading-relaxed mb-6 font-sans">
-            Inspect pending threat submissions, review aggregated telemetry proofs, cast quorum votes, and trigger smart contract bounties.
+          <h2 class="text-sm font-bold text-gray-900 dark:text-white mb-2">DAO Governance Quorum</h2>
+          <p class="text-[11px] text-subtleTextLight dark:text-subtleTextDark leading-relaxed mb-4">
+            Inspect pending submissions, cast quorum votes, and trigger bounties.
           </p>
-          <ul class="space-y-2.5 mb-8 font-mono text-xs text-gray-700 dark:text-gray-300">
-            <li class="flex items-center gap-2"><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-amberAccent"></i> Active Quorum Queue</li>
-            <li class="flex items-center gap-2"><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-amberAccent"></i> Slashable Stake Verification</li>
-            <li class="flex items-center gap-2 text-subtleTextLight dark:text-subtleTextDark"><i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-40"></i> Quorum Threshold: 85%</li>
+          <ul class="space-y-2 mb-6 font-mono text-[11px] text-gray-700 dark:text-gray-300">
+            <li class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-amberAccent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg> Active Quorum Queue</li>
+            <li class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-amberAccent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg> Slashable Stake Verification</li>
           </ul>
         </div>
-        <button @click="completeWorkspaceSelection()" class="btn-white-metallic card-content-3d w-full py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2">
+        <button @click="completeWorkspaceSelection()" class="btn-white-metallic card-content-3d w-full py-2.5 rounded-xl font-mono text-[11px] font-bold flex items-center justify-center gap-2">
           <span>ENTER QUORUM QUEUE</span>
-          <i data-lucide="arrow-right" class="w-4 h-4 text-amberAccent"></i>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </button>
       </div>
 
       <!-- BLI Legal Forensics -->
-      <div class="metallic-card workspace-card relative bg-cardBgLight/85 dark:bg-cardBgDark/85 backdrop-blur-md border border-amberAccent/30 rounded-2xl p-8 flex flex-col justify-between opacity-0 shadow-lg hover:border-amberAccent/60">
-        <div class="absolute top-5 right-5 w-12 h-12 rounded-full border border-amberAccent/30 bg-amberGlow flex items-center justify-center card-content-3d">
-          <svg id="bliSeal" class="w-8 h-8 text-amberAccent" viewBox="0 0 100 100">
-            <path id="curve" fill="none" d="M 50,50 m -37,0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0"/>
-            <text class="text-[10px] font-mono fill-amberAccent uppercase tracking-widest font-bold">
-              <textPath href="#curve">• BLI SEAL • COURT CERTIFIED</textPath>
-            </text>
-          </svg>
+      <div class="metallic-card workspace-card relative bg-cardBgLight/85 dark:bg-cardBgDark/85 backdrop-blur-md border border-amberAccent/30 rounded-2xl p-6 flex flex-col justify-between opacity-0 shadow-lg hover:border-amberAccent/60 transition-all">
+        <div class="absolute top-4 right-4 w-10 h-10 rounded-full border border-amberAccent/30 bg-amberGlow flex items-center justify-center card-content-3d">
+          <svg id="bliSeal" class="w-6 h-6 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
         </div>
         <div class="card-content-3d">
-          <div class="w-12 h-12 rounded-xl bg-amberGlow border border-amberAccent/30 flex items-center justify-center text-amberAccent mb-6">
-            <i data-lucide="scale" class="w-6 h-6"></i>
+          <div class="w-10 h-10 rounded-xl bg-amberGlow border border-amberAccent/30 flex items-center justify-center text-amberAccent mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
           </div>
-          <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Dispute & Legal Forensics</h2>
-          <p class="text-xs text-subtleTextLight dark:text-subtleTextDark leading-relaxed mb-6 font-sans">
-            Audit verified threat reports and generate court-admissible, XBRL-formatted dossiers backed by the Blockchain Legal Institute.
+          <h2 class="text-sm font-bold text-gray-900 dark:text-white mb-2">Dispute & Legal Forensics</h2>
+          <p class="text-[11px] text-subtleTextLight dark:text-subtleTextDark leading-relaxed mb-4">
+            Generate court-admissible, XBRL-formatted dossiers backed by BLI.
           </p>
-          <ul class="space-y-2.5 mb-8 font-mono text-xs text-gray-700 dark:text-gray-300">
-            <li class="flex items-center gap-2"><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-amberAccent"></i> XBRL Court Artifacts</li>
-            <li class="flex items-center gap-2"><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-amberAccent"></i> 34 Admissible Jurisdictions</li>
-            <li class="flex items-center gap-2 text-amberAccent font-bold"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Cryptographic Attestation</li>
+          <ul class="space-y-2 mb-6 font-mono text-[11px] text-gray-700 dark:text-gray-300">
+            <li class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-amberAccent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg> XBRL Court Artifacts</li>
+            <li class="flex items-center gap-2 text-amberAccent font-bold"><svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg> Cryptographic Attestation</li>
           </ul>
         </div>
-        <button @click="completeWorkspaceSelection()" class="btn-amber-metallic card-content-3d w-full py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2">
+        <button @click="completeWorkspaceSelection()" class="btn-amber-metallic card-content-3d w-full py-2.5 rounded-xl font-mono text-[11px] font-bold flex items-center justify-center gap-2">
           <span>GENERATE LEGAL DOSSIER</span>
-          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </button>
       </div>
 
-    </div>
-
-    <!-- ENS Registration Modal (Step 2) -->
-    <div x-show="currentOnboardStep === 2 && ensVisible" 
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div class="bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-8 max-w-lg w-full shadow-2xl relative">
-        <button @click="ensVisible = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-        
-        <div class="text-center mb-6">
-          <div class="w-16 h-16 mx-auto rounded-full bg-amberGlow border border-amberAccent/30 flex items-center justify-center mb-4">
-            <svg class="w-10 h-10 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Register Your ENS Name</h2>
-          <p class="text-xs text-subtleTextLight dark:text-subtleTextDark">
-            Secure your decentralized identity on Sepolia testnet. Your ENS name will be your universal ID across Eunomia.
-          </p>
-        </div>
-
-        <!-- Step 1: Enter Name -->
-        <div x-show="ensRegistrationStep === 0" class="space-y-4">
-          <div class="relative">
-            <input x-model="ensState.selectedName" 
-                   type="text" 
-                   placeholder="Enter your desired name"
-                   class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-amberAccent font-mono text-sm">
-            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-mono">.eth</span>
-          </div>
-          <button @click="checkEnsAvailability()" 
-                  class="w-full btn-amber-metallic py-3 rounded-xl font-mono text-xs font-bold">
-            CHECK AVAILABILITY
-          </button>
-        </div>
-
-        <!-- Step 2: Available -->
-        <div x-show="ensRegistrationStep === 2" class="space-y-4">
-          <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center">
-            <span class="text-emerald-600 dark:text-emerald-400 font-bold text-sm">✓ Name Available!</span>
-            <p class="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-1" x-text="ensState.selectedName + '.eth'">is available for registration</p>
-          </div>
-          <div class="bg-gray-50 dark:bg-zinc-900 rounded-xl p-4">
-            <div class="flex justify-between text-xs font-mono mb-2">
-              <span class="text-gray-500">Registration Cost:</span>
-              <span class="text-amberAccent font-bold">~0.01 ETH</span>
-            </div>
-            <div class="flex justify-between text-xs font-mono">
-              <span class="text-gray-500">Duration:</span>
-              <span class="text-gray-700 dark:text-gray-300">1 Year</span>
-            </div>
-          </div>
-          <button @click="registerEnsName()" 
-                  class="w-full btn-amber-metallic py-3 rounded-xl font-mono text-xs font-bold">
-            REGISTER NAME
-          </button>
-        </div>
-
-        <!-- Step 3: Registering -->
-        <div x-show="ensRegistrationStep === 3" class="text-center py-8">
-          <div class="w-12 h-12 border-4 border-amberAccent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p class="text-sm text-gray-600 dark:text-gray-300 font-mono">Registering ENS name...</p>
-          <p class="text-xs text-gray-400 mt-2">Please confirm the transaction in MetaMask</p>
-        </div>
-
-        <!-- Step 4: Complete -->
-        <div x-show="ensRegistrationStep === 4" class="text-center py-8">
-          <div class="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-            <i data-lucide="check" class="w-8 h-8 text-emerald-500"></i>
-          </div>
-          <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Registration Complete!</h3>
-          <p class="text-xs text-gray-500 mb-4" x-text="ensState.selectedName + '.eth'">has been registered</p>
-          <button @click="completeEnsRegistration()" 
-                  class="w-full btn-amber-metallic py-3 rounded-xl font-mono text-xs font-bold">
-            CONTINUE TO WORKSPACE
-          </button>
-        </div>
-
-        <!-- Error State -->
-        <div x-show="ensError" class="mt-4 bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-          <p class="text-xs text-red-600 dark:text-red-400 font-mono" x-text="ensError"></p>
-        </div>
-
-        <!-- Success Message -->
-        <div x-show="ensSuccess && ensRegistrationStep === 4" class="mt-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
-          <p class="text-xs text-emerald-600 dark:text-emerald-400 font-mono" x-text="ensSuccess"></p>
-        </div>
-
-        <!-- Skip Button (for demo) -->
-        <button @click="ensVisible = false; currentOnboardStep = 1;" 
-                class="mt-4 w-full text-center text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-mono">
-          Skip for now (demo mode)
-        </button>
-      </div>
     </div>
   </main>
+
+  <!-- WALLET SETTINGS MODAL -->
+  <div x-show="showWalletModal"
+    x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+    @keydown.escape.window="showWalletModal = false"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md" style="display:none">
+    <div @click.away="showWalletModal = false" class="w-full max-w-md bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-cardBorderLight dark:border-cardBorderDark pb-4">
+        <h3 class="text-sm font-bold text-gray-900 dark:text-white font-mono flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+          Wallet Details
+        </h3>
+        <button @click="showWalletModal = false" class="text-gray-400 hover:text-white transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Full Address -->
+      <div class="space-y-2">
+        <label class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark uppercase tracking-wider">Full Address</label>
+        <div class="bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark rounded-xl p-3 font-mono text-[11px] text-gray-900 dark:text-white break-all" x-text="walletAddress"></div>
+        <button @click="copyAddress()" class="w-full text-center text-[11px] font-mono text-amberAccent hover:underline py-1">
+          <span x-text="copiedAddress ? '✓ Copied to clipboard' : 'Copy address'"></span>
+        </button>
+      </div>
+
+      <!-- Private Key Warning -->
+      <div class="bg-amberAccent/5 border border-amberAccent/20 rounded-xl p-4 space-y-2">
+        <div class="flex items-center gap-2 text-amberAccent text-xs font-bold">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+          Private Key
+        </div>
+        <p class="text-[10px] text-subtleTextLight dark:text-subtleTextDark leading-relaxed">
+          Your private key is encrypted and stored in this browser. For hackathon testing, your wallet is pre-funded with 100 $EU.
+        </p>
+        <div class="flex gap-2">
+          <button @click="showPrivateKey = !showPrivateKey" class="flex-1 bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark py-2 rounded-lg font-mono text-[10px] text-gray-700 dark:text-gray-300 hover:border-amberAccent/40 transition">
+            <span x-text="showPrivateKey ? 'Hide Key' : 'Show Key'"></span>
+          </button>
+          <button @click="copyPrivateKey()" class="flex-1 bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark py-2 rounded-lg font-mono text-[10px] text-gray-700 dark:text-gray-300 hover:border-amberAccent/40 transition">
+            <span x-text="copiedKey ? 'Copied!' : 'Copy Key'"></span>
+          </button>
+        </div>
+        <div x-show="showPrivateKey" class="bg-black/40 rounded-lg p-3 font-mono text-[9px] text-red-400 break-all" x-text="privateKeyDisplay"></div>
+      </div>
+
+      <!-- Info -->
+      <div class="bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark rounded-xl p-4 space-y-2">
+        <div class="flex justify-between text-[10px] font-mono">
+          <span class="text-subtleTextLight dark:text-subtleTextDark">Network</span>
+          <span class="text-gray-900 dark:text-white">Ethereum Sepolia</span>
+        </div>
+        <div class="flex justify-between text-[10px] font-mono">
+          <span class="text-subtleTextLight dark:text-subtleTextDark">Created</span>
+          <span class="text-gray-900 dark:text-white" x-text="walletData?.createdAt ? new Date(walletData.createdAt).toLocaleDateString() : 'Now'"></span>
+        </div>
+        <div class="flex justify-between text-[10px] font-mono">
+          <span class="text-subtleTextLight dark:text-subtleTextDark">Provider</span>
+          <span class="text-gray-900 dark:text-white">Eunomia Auto-Wallet</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENS Registration Modal (Optional) -->
+  <div x-show="ensVisible"
+    x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md" style="display:none">
+    <div @click.away="ensVisible = false" class="bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-8 max-w-lg w-full shadow-2xl relative">
+      <button @click="ensVisible = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+      
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 mx-auto rounded-full bg-amberGlow border border-amberAccent/30 flex items-center justify-center mb-4">
+          <svg class="w-10 h-10 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Register Your ENS Name</h2>
+        <p class="text-xs text-subtleTextLight dark:text-subtleTextDark">
+          Secure your decentralized identity on Sepolia. <span class="text-subtleTextLight/60">Optional for demo testing.</span>
+        </p>
+      </div>
+
+      <!-- Step 1: Enter Name -->
+      <div x-show="ensRegistrationStep === 0" class="space-y-4">
+        <div class="relative">
+          <input x-model="ensState.selectedName" type="text" placeholder="Enter your desired name"
+            class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-amberAccent font-mono text-sm">
+          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-mono">.eth</span>
+        </div>
+        <button @click="checkEnsAvailability()" class="w-full btn-amber-metallic py-3 rounded-xl font-mono text-xs font-bold">CHECK AVAILABILITY</button>
+      </div>
+
+      <!-- Step 2: Available -->
+      <div x-show="ensRegistrationStep === 2" class="space-y-4">
+        <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center">
+          <span class="text-emerald-600 dark:text-emerald-400 font-bold text-sm">✓ Name Available!</span>
+          <p class="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-1" x-text="ensState.selectedName + '.eth'"></p>
+        </div>
+        <div class="bg-gray-50 dark:bg-zinc-900 rounded-xl p-4 space-y-2">
+          <div class="flex justify-between text-xs font-mono"><span class="text-gray-500">Cost:</span><span class="text-amberAccent font-bold">~0.01 ETH</span></div>
+          <div class="flex justify-between text-xs font-mono"><span class="text-gray-500">Duration:</span><span class="text-gray-700 dark:text-gray-300">1 Year</span></div>
+        </div>
+        <button @click="registerEnsName()" class="w-full btn-amber-metallic py-3 rounded-xl font-mono text-xs font-bold">REGISTER NAME</button>
+      </div>
+
+      <!-- Step 3: Registering -->
+      <div x-show="ensRegistrationStep === 3" class="text-center py-8">
+        <div class="w-12 h-12 border-4 border-amberAccent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-sm text-gray-600 dark:text-gray-300 font-mono">Registering...</p>
+        <p class="text-xs text-gray-400 mt-2">Confirm in MetaMask</p>
+      </div>
+
+      <!-- Step 4: Complete -->
+      <div x-show="ensRegistrationStep === 4" class="text-center py-6">
+        <div class="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Registered!</h3>
+        <p class="text-xs text-gray-500 mb-4" x-text="ensState.selectedName + '.eth'"></p>
+        <button @click="ensVisible = false" class="w-full btn-amber-metallic py-3 rounded-xl font-mono text-xs font-bold">DONE</button>
+      </div>
+
+      <!-- Error -->
+      <div x-show="ensError" class="mt-4 bg-red-500/10 border border-red-500/30 rounded-xl p-3">
+        <p class="text-xs text-red-600 dark:text-red-400 font-mono" x-text="ensError"></p>
+      </div>
+
+      <!-- Skip -->
+      <button @click="ensVisible = false" class="mt-4 w-full text-center text-[11px] font-mono text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition">
+        Skip for now
+      </button>
+    </div>
+  </div>
 
   <!-- FOOTER -->
   <footer class="w-full border-t border-cardBorderLight dark:border-cardBorderDark bg-cardBgLight/70 dark:bg-cardBgDark/70 backdrop-blur-md px-6 py-4 flex flex-col sm:flex-row justify-between items-center text-[11px] font-mono text-subtleTextLight dark:text-subtleTextDark gap-2 z-20">
@@ -333,13 +428,17 @@
   </footer>
 
   <script>
-    // Alpine component for onboard page — inherits auth from auth.js
     document.addEventListener('alpine:init', () => {
       Alpine.data('onboardState', () => ({
         ...createAuthState(),
         ...createEnsState(),
         darkMode: localStorage.getItem('eunomia-theme') !== 'light',
-        currentOnboardStep: 1, // 1: workspace, 2: ENS registration, 3: complete
+        currentOnboardStep: 1,
+        showWalletModal: false,
+        showPrivateKey: false,
+        copiedAddress: false,
+        copiedKey: false,
+        privateKeyDisplay: '',
         toggleTheme() {
           this.darkMode = !this.darkMode;
           document.documentElement.classList.toggle('dark', this.darkMode);
@@ -349,49 +448,56 @@
         async init() {
           this.initEns();
           await this.initAuth();
-          // Check ENS after auth completes
-          this.checkEnsRequirement();
-        },
-        checkEnsRequirement() {
-          // If user has no ENS name registered, show ENS registration step
-          if (this.isAuthenticated && this.ensRegistrations.length === 0) {
-            this.currentOnboardStep = 2;
-            this.ensVisible = true;
+          // Load private key display
+          if (this.walletData?.encryptedPrivateKey && this.user?.email) {
+            try {
+              this.privateKeyDisplay = await WalletCrypto.decrypt(this.walletData.encryptedPrivateKey, this.user.email);
+            } catch(e) { this.privateKeyDisplay = 'Unable to decrypt'; }
           }
+        },
+        copyAddress() {
+          if (!this.walletAddress) return;
+          navigator.clipboard.writeText(this.walletAddress);
+          this.copiedAddress = true;
+          setTimeout(() => this.copiedAddress = false, 2000);
+        },
+        async copyPrivateKey() {
+          if (!this.privateKeyDisplay) return;
+          navigator.clipboard.writeText(this.privateKeyDisplay);
+          this.copiedKey = true;
+          setTimeout(() => this.copiedKey = false, 2000);
         },
         completeWorkspaceSelection() {
-          // After workspace selection, proceed to ENS if needed
+          // For now, show ENS if not registered, else stay on page
           if (this.ensRegistrations.length === 0) {
-            this.currentOnboardStep = 2;
             this.ensVisible = true;
-          } else {
-            this.currentOnboardStep = 3;
           }
-        }
+        },
+        checkEnsRequirement() {
+          // No longer blocking — ENS is optional
+        },
       }));
     });
 
     lucide.createIcons();
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Entrance animations
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-      tl.to('#badge',          { opacity: 1, y: 0, duration: 0.5 })
-        .to('#title',          { opacity: 1, y: 0, duration: 0.6 }, '-=0.3')
-        .to('#subtitle',       { opacity: 1, y: 0, duration: 0.6 }, '-=0.4')
-        .to('#faucet-link',    { opacity: 1, y: 0, duration: 0.5 }, '-=0.3')
-        .to('.workspace-card', { opacity: 1, y: 0, duration: 0.7, stagger: 0.12 }, '-=0.3');
+      tl.to('#badge',     { opacity: 1, y: 0, duration: 0.5 })
+        .to('#title',     { opacity: 1, y: 0, duration: 0.6 }, '-=0.3')
+        .to('#subtitle',  { opacity: 1, y: 0, duration: 0.6 }, '-=0.4')
+        .to('#wallet-card', { opacity: 1, y: 0, duration: 0.7 }, '-=0.3')
+        .to('#ens-card',  { opacity: 1, y: 0, duration: 0.5 }, '-=0.4')
+        .to('.workspace-card', { opacity: 1, y: 0, duration: 0.7, stagger: 0.1 }, '-=0.3');
 
-      // BLI seal rotation
       gsap.to('#bliSeal', { rotation: 360, transformOrigin: '50% 50%', duration: 22, repeat: -1, ease: 'none' });
 
-      // 3D card tilt + specular
       document.querySelectorAll('.metallic-card').forEach(card => {
         card.addEventListener('mousemove', e => {
           const r = card.getBoundingClientRect();
           const x = e.clientX - r.left, y = e.clientY - r.top;
           const cx = r.width / 2, cy = r.height / 2;
-          gsap.to(card, { rotateX: ((y - cy) / cy) * -10, rotateY: ((x - cx) / cx) * 10, duration: 0.4, ease: 'power2.out' });
+          gsap.to(card, { rotateX: ((y - cy) / cy) * -8, rotateY: ((x - cx) / cx) * 8, duration: 0.4, ease: 'power2.out' });
           const dark = document.documentElement.classList.contains('dark');
           card.style.background = dark
             ? `radial-gradient(circle at ${x}px ${y}px,rgba(217,119,6,0.12) 0%,rgba(17,17,17,0.88) 65%)`
@@ -404,44 +510,31 @@
       });
 
       // Three.js Scales of Justice
-      init3DScaleScene();
-    });
-
-    function init3DScaleScene() {
       const container = document.getElementById('canvas3d');
       if (!container || typeof THREE === 'undefined') return;
-
-      const scene    = new THREE.Scene();
-      const camera   = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
       camera.position.z = 8;
-
       const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       container.appendChild(renderer.domElement);
-
       const dark = document.documentElement.classList.contains('dark');
       const wireframeMat = new THREE.MeshBasicMaterial({ color: dark ? 0xCCCCCC : 0x444444, wireframe: true, transparent: true, opacity: dark ? 0.35 : 0.5 });
       const subtleLineMat = new THREE.MeshBasicMaterial({ color: dark ? 0xCCCCCC : 0x444444, wireframe: true, transparent: true, opacity: dark ? 0.2 : 0.3 });
-
       const scaleGroup = new THREE.Group();
-
       const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.12, 4.2, 12), wireframeMat);
       scaleGroup.add(pillar);
-
       const base = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.95, 0.2, 16), wireframeMat);
       base.position.y = -2.1;
       scaleGroup.add(base);
-
       const topFinial = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 10), wireframeMat);
       topFinial.position.y = 2.1;
       scaleGroup.add(topFinial);
-
       const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 3.8, 12), wireframeMat);
       beam.rotation.z = Math.PI / 2;
       beam.position.y = 1.55;
       scaleGroup.add(beam);
-
       const createPanAssembly = (xOffset) => {
         const g = new THREE.Group();
         g.position.set(xOffset, 1.55, 0);
@@ -452,50 +545,39 @@
         dish.position.y = -1.6; g.add(dish);
         return g;
       };
-
-      const leftPan  = createPanAssembly(-1.8);
-      const rightPan = createPanAssembly(1.8);
-      scaleGroup.add(leftPan);
-      scaleGroup.add(rightPan);
-
+      scaleGroup.add(createPanAssembly(-1.8));
+      scaleGroup.add(createPanAssembly(1.8));
       function updatePos() {
         if (window.innerWidth >= 768) { scaleGroup.position.set(3.8, 0.4, -1.2); scaleGroup.scale.set(1.25, 1.25, 1.25); }
         else { scaleGroup.position.set(0, -0.2, -3); scaleGroup.scale.set(0.8, 0.8, 0.8); }
       }
       updatePos();
       scene.add(scaleGroup);
-
       window.update3DTheme = (isDark) => {
         const hex = isDark ? 0xCCCCCC : 0x444444;
         wireframeMat.color.setHex(hex); subtleLineMat.color.setHex(hex);
         wireframeMat.opacity = isDark ? 0.35 : 0.5; subtleLineMat.opacity = isDark ? 0.2 : 0.3;
       };
-
       let mouseX = 0, mouseY = 0;
-      window.addEventListener('mousemove', e => {
-        mouseX = (e.clientX - window.innerWidth  / 2) * 0.0008;
-        mouseY = (e.clientY - window.innerHeight / 2) * 0.0008;
-      });
-
+      window.addEventListener('mousemove', e => { mouseX = (e.clientX - window.innerWidth/2)*0.0008; mouseY = (e.clientY - window.innerHeight/2)*0.0008; });
       const clock = new THREE.Clock();
       (function animate() {
         requestAnimationFrame(animate);
         const t = clock.getElapsedTime();
         beam.rotation.z = Math.PI / 2 + Math.sin(t * 1.5) * 0.04;
-        leftPan.position.y  = 1.55 + Math.sin(t * 1.5) * 0.07;
-        rightPan.position.y = 1.55 - Math.sin(t * 1.5) * 0.07;
+        scaleGroup.children[4].position.y = 1.55 + Math.sin(t * 1.5) * 0.07;
+        scaleGroup.children[5].position.y = 1.55 - Math.sin(t * 1.5) * 0.07;
         scaleGroup.rotation.y = Math.sin(t * 0.35) * 0.2;
         gsap.to(scaleGroup.rotation, { x: mouseY * 0.8, duration: 1.2, ease: 'power1.out' });
         renderer.render(scene, camera);
       })();
-
       window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
         updatePos();
       });
-    }
+    });
   </script>
 </body>
 </html>
