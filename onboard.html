@@ -13,12 +13,30 @@
 
   <script src="https://unpkg.com/lucide@latest"></script>
 
+  <!-- Auth check — redirect to home if not signed in -->
+  <script>
+    (function() {
+      const SUPABASE_URL = 'https://olbklffxzqfqyfbmrmrk.supabase.co';
+      const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
+      // Quick session check — if no session, redirect to home
+      if (window.supabase && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE') {
+        const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        client.auth.getSession().then(({ data }) => {
+          if (!data.session) window.location.href = '/';
+        });
+      }
+    })();
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- wallet.js registers alpine:init before Alpine runs -->
-  <script src="js/wallet.js"></script>
+  <!-- auth.js registers alpine:init before Alpine runs -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ens.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -76,16 +94,34 @@
         <template x-if="!darkMode"><i data-lucide="moon" class="w-4 h-4 text-gray-800"></i></template>
       </button>
 
-      <!-- Wallet badge — reads from localStorage -->
+      <!-- User badge — reads from Supabase auth -->
       <div class="bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-full px-4 py-2 shadow-md text-xs font-mono font-semibold flex items-center gap-3 text-gray-800 dark:text-gray-100">
-        <span class="flex items-center gap-1.5 text-emerald-500 font-bold">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span x-text="walletChain"></span>
-        </span>
-        <span class="text-cardBorderDark dark:text-zinc-700">|</span>
-        <span class="text-amberAccent font-bold">100 $EU</span>
-        <span class="text-cardBorderDark dark:text-zinc-700">|</span>
-        <span x-text="walletAddress"></span>
+        <template x-if="isAuthenticated">
+          <div class="flex items-center gap-2">
+            <template x-if="userAvatar">
+              <img :src="userAvatar" class="w-5 h-5 rounded-full object-cover" alt="" />
+            </template>
+            <template x-if="!userAvatar">
+              <span class="w-5 h-5 rounded-full bg-amberAccent/20 text-amberAccent flex items-center justify-center text-[9px] font-bold" x-text="userInitials"></span>
+            </template>
+            <span class="flex items-center gap-1.5 text-emerald-500 font-bold">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Online
+            </span>
+            <span class="text-cardBorderDark dark:text-zinc-700">|</span>
+            <span class="text-amberAccent font-bold" x-text="walletAddress ? walletAddress.slice(0,6) + '...' + walletAddress.slice(-4) : 'Loading...'"></span>
+            <span class="text-cardBorderDark dark:text-zinc-700">|</span>
+            <span class="text-amberAccent font-bold">100 $EU</span>
+            <span class="text-cardBorderDark dark:text-zinc-700">|</span>
+            <span x-text="userDisplayName"></span>
+          </div>
+        </template>
+        <template x-if="!isAuthenticated && !authLoading">
+          <a href="/" class="flex items-center gap-2 text-amberAccent hover:underline">
+            <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+            Sign In Required
+          </a>
+        </template>
       </div>
     </div>
   </header>
@@ -185,6 +221,107 @@
       </div>
 
     </div>
+
+    <!-- ENS Registration Modal (Step 2) -->
+    <div x-show="currentOnboardStep === 2 && ensVisible" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div class="bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-8 max-w-lg w-full shadow-2xl relative">
+        <button @click="ensVisible = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+        
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 mx-auto rounded-full bg-amberGlow border border-amberAccent/30 flex items-center justify-center mb-4">
+            <svg class="w-10 h-10 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Register Your ENS Name</h2>
+          <p class="text-xs text-subtleTextLight dark:text-subtleTextDark">
+            Secure your decentralized identity on Sepolia testnet. Your ENS name will be your universal ID across Eunomia.
+          </p>
+        </div>
+
+        <!-- Step 1: Enter Name -->
+        <div x-show="ensRegistrationStep === 0" class="space-y-4">
+          <div class="relative">
+            <input x-model="ensState.selectedName" 
+                   type="text" 
+                   placeholder="Enter your desired name"
+                   class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-amberAccent font-mono text-sm">
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-mono">.eth</span>
+          </div>
+          <button @click="checkEnsAvailability()" 
+                  class="w-full btn-amber-metallic py-3 rounded-xl font-mono text-xs font-bold">
+            CHECK AVAILABILITY
+          </button>
+        </div>
+
+        <!-- Step 2: Available -->
+        <div x-show="ensRegistrationStep === 2" class="space-y-4">
+          <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center">
+            <span class="text-emerald-600 dark:text-emerald-400 font-bold text-sm">✓ Name Available!</span>
+            <p class="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-1" x-text="ensState.selectedName + '.eth'">is available for registration</p>
+          </div>
+          <div class="bg-gray-50 dark:bg-zinc-900 rounded-xl p-4">
+            <div class="flex justify-between text-xs font-mono mb-2">
+              <span class="text-gray-500">Registration Cost:</span>
+              <span class="text-amberAccent font-bold">~0.01 ETH</span>
+            </div>
+            <div class="flex justify-between text-xs font-mono">
+              <span class="text-gray-500">Duration:</span>
+              <span class="text-gray-700 dark:text-gray-300">1 Year</span>
+            </div>
+          </div>
+          <button @click="registerEnsName()" 
+                  class="w-full btn-amber-metallic py-3 rounded-xl font-mono text-xs font-bold">
+            REGISTER NAME
+          </button>
+        </div>
+
+        <!-- Step 3: Registering -->
+        <div x-show="ensRegistrationStep === 3" class="text-center py-8">
+          <div class="w-12 h-12 border-4 border-amberAccent border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p class="text-sm text-gray-600 dark:text-gray-300 font-mono">Registering ENS name...</p>
+          <p class="text-xs text-gray-400 mt-2">Please confirm the transaction in MetaMask</p>
+        </div>
+
+        <!-- Step 4: Complete -->
+        <div x-show="ensRegistrationStep === 4" class="text-center py-8">
+          <div class="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+            <i data-lucide="check" class="w-8 h-8 text-emerald-500"></i>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Registration Complete!</h3>
+          <p class="text-xs text-gray-500 mb-4" x-text="ensState.selectedName + '.eth'">has been registered</p>
+          <button @click="completeEnsRegistration()" 
+                  class="w-full btn-amber-metallic py-3 rounded-xl font-mono text-xs font-bold">
+            CONTINUE TO WORKSPACE
+          </button>
+        </div>
+
+        <!-- Error State -->
+        <div x-show="ensError" class="mt-4 bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+          <p class="text-xs text-red-600 dark:text-red-400 font-mono" x-text="ensError"></p>
+        </div>
+
+        <!-- Success Message -->
+        <div x-show="ensSuccess && ensRegistrationStep === 4" class="mt-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+          <p class="text-xs text-emerald-600 dark:text-emerald-400 font-mono" x-text="ensSuccess"></p>
+        </div>
+
+        <!-- Skip Button (for demo) -->
+        <button @click="ensVisible = false; currentOnboardStep = 1;" 
+                class="mt-4 w-full text-center text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-mono">
+          Skip for now (demo mode)
+        </button>
+      </div>
+    </div>
   </main>
 
   <!-- FOOTER -->
@@ -197,24 +334,42 @@
   </footer>
 
   <script>
-    // Alpine component for onboard page — reads everything from localStorage
+    // Alpine component for onboard page — inherits auth from auth.js
     document.addEventListener('alpine:init', () => {
-      Alpine.data('onboardState', () => {
-        const wallet = JSON.parse(localStorage.getItem('eunomia-wallet') || '{}');
-        const isDark  = localStorage.getItem('eunomia-theme') !== 'light';
-        return {
-          darkMode:      isDark,
-          walletAddress: wallet.address || '—',
-          walletChain:   wallet.chain === 'solana' ? 'Solana' : 'Sepolia',
-
-          toggleTheme() {
-            this.darkMode = !this.darkMode;
-            document.documentElement.classList.toggle('dark', this.darkMode);
-            localStorage.setItem('eunomia-theme', this.darkMode ? 'dark' : 'light');
-            if (window.update3DTheme) window.update3DTheme(this.darkMode);
-          },
-        };
-      });
+      Alpine.data('onboardState', () => ({
+        ...createAuthState(),
+        ...createEnsState(),
+        darkMode: localStorage.getItem('eunomia-theme') !== 'light',
+        currentOnboardStep: 1, // 1: workspace, 2: ENS registration, 3: complete
+        toggleTheme() {
+          this.darkMode = !this.darkMode;
+          document.documentElement.classList.toggle('dark', this.darkMode);
+          localStorage.setItem('eunomia-theme', this.darkMode ? 'dark' : 'light');
+          if (window.update3DTheme) window.update3DTheme(this.darkMode);
+        },
+        init() {
+          this.initAuth();
+          this.initEns();
+          // Check if user needs ENS registration
+          this.checkEnsRequirement();
+        },
+        checkEnsRequirement() {
+          // If user has no ENS name registered, show ENS registration step
+          if (this.isAuthenticated && this.ensRegistrations.length === 0) {
+            this.currentOnboardStep = 2;
+            this.ensVisible = true;
+          }
+        },
+        completeWorkspaceSelection() {
+          // After workspace selection, proceed to ENS if needed
+          if (this.ensRegistrations.length === 0) {
+            this.currentOnboardStep = 2;
+            this.ensVisible = true;
+          } else {
+            this.currentOnboardStep = 3;
+          }
+        }
+      }));
     });
 
     lucide.createIcons();

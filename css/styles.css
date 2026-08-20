@@ -23,3 +23,15 @@
 }
 .vault-door { background: linear-gradient(180deg,#f3f4f6 0%,#e5e7eb 100%); }
 .dark .vault-door { background: linear-gradient(180deg,#111113 0%,#080809 100%); }
+.btn-amber-metallic {
+  background: linear-gradient(135deg, #D97706 0%, #B45309 100%);
+  color: #FFFFFF;
+  box-shadow: 0 4px 20px rgba(217,119,6,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
+  border: 1px solid rgba(245,158,11,0.5);
+}
+.btn-amber-metallic:hover:not(:disabled) {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  box-shadow: 0 6px 25px rgba(217,119,6,0.35);
+  transform: translateY(-2px);
+}
+.btn-amber-metallic:disabled { opacity: 0.5; cursor: not-allowed; }

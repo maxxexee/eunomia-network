@@ -15,8 +15,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- wallet.js must be sync BEFORE Alpine's defer so alpine:init fires correctly -->
-  <script src="js/wallet.js"></script>
+  <!-- auth.js must be sync BEFORE Alpine's defer so alpine:init fires correctly -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+  <script src="js/auth.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -40,79 +42,144 @@
         <template x-if="darkMode"><i data-lucide="sun" class="w-4 h-4 text-amberAccent"></i></template>
         <template x-if="!darkMode"><i data-lucide="moon" class="w-4 h-4 text-gray-800"></i></template>
       </button>
-      <button @click="walletModalOpen = true" class="bg-cardBgLight/90 dark:bg-cardBgDark/90 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark hover:border-amberAccent/60 rounded-full px-5 py-2.5 shadow-lg text-xs font-mono font-semibold flex items-center gap-2.5 text-gray-800 dark:text-gray-100 transition group">
-        <i data-lucide="wallet" class="w-4 h-4 text-amberAccent group-hover:scale-110 transition-transform"></i>
-        <span x-text="walletConnected ? walletAddress : 'Connect Wallet'"></span>
-      </button>
+      <!-- Auth button -->
+      <template x-if="!isAuthenticated && !authLoading">
+        <button @click="openAuth()" class="bg-cardBgLight/90 dark:bg-cardBgDark/90 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark hover:border-amberAccent/60 rounded-full px-5 py-2.5 shadow-lg text-xs font-mono font-semibold flex items-center gap-2.5 text-gray-800 dark:text-gray-100 transition group">
+          <i data-lucide="log-in" class="w-4 h-4 text-amberAccent group-hover:scale-110 transition-transform"></i>
+          <span>Sign In</span>
+        </button>
+      </template>
+      <!-- User badge (logged in) -->
+      <template x-if="isAuthenticated">
+        <div class="flex items-center gap-2">
+          <a href="onboard.html" class="bg-cardBgLight/90 dark:bg-cardBgDark/90 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark hover:border-amberAccent/60 rounded-full px-4 py-2.5 shadow-lg text-xs font-mono font-semibold flex items-center gap-2.5 text-gray-800 dark:text-gray-100 transition">
+            <template x-if="userAvatar">
+              <img :src="userAvatar" class="w-5 h-5 rounded-full object-cover" alt="" />
+            </template>
+            <template x-if="!userAvatar">
+              <span class="w-5 h-5 rounded-full bg-amberAccent/20 text-amberAccent flex items-center justify-center text-[10px] font-bold" x-text="userInitials"></span>
+            </template>
+            <span x-text="userDisplayName"></span>
+          </a>
+          <button @click="signOut()" class="bg-cardBgLight/80 dark:bg-cardBgDark/80 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-full p-2.5 shadow-lg text-gray-500 hover:text-red-400 transition" title="Sign out">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </template>
+      <!-- Loading spinner -->
+      <template x-if="authLoading">
+        <div class="w-10 h-10 rounded-full border-2 border-cardBorderLight dark:border-cardBorderDark border-t-amberAccent animate-spin"></div>
+      </template>
     </div>
   </header>
 
-  <!-- WALLET MODAL -->
-  <div x-show="walletModalOpen"
+  <!-- AUTH MODAL -->
+  <div x-show="authModalOpen"
     x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-    @keydown.escape.window="walletModalOpen = false"
+    @keydown.escape.window="authModalOpen = false"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md" style="display:none">
-    <div @click.away="walletModalOpen = false" class="metallic-card w-full max-w-md bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 shadow-2xl space-y-6">
+    <div @click.away="authModalOpen = false" class="metallic-card w-full max-w-md bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 shadow-2xl space-y-6">
+      <!-- Header -->
       <div class="flex items-center justify-between border-b border-cardBorderLight dark:border-cardBorderDark pb-4">
         <div class="flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-amberAccent animate-pulse"></span>
-          <h3 class="text-sm font-bold text-gray-900 dark:text-white font-mono">Connect Web3 Wallet</h3>
+          <h3 class="text-sm font-bold text-gray-900 dark:text-white font-mono">Sign In to Eunomia</h3>
         </div>
-        <button @click="walletModalOpen = false" class="text-gray-400 hover:text-white transition"><i data-lucide="x" class="w-4 h-4"></i></button>
+        <button @click="authModalOpen = false" class="text-gray-400 hover:text-white transition"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
-      <div class="grid grid-cols-2 gap-2 p-1 bg-gray-100 dark:bg-zinc-900 rounded-xl border border-cardBorderLight dark:border-cardBorderDark text-xs font-mono">
-        <button @click="selectedChain='evm'" :class="selectedChain==='evm'?'bg-cardBgLight dark:bg-cardBgDark text-amberAccent shadow-sm':'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'" class="py-2 rounded-lg transition font-semibold">EVM Chains</button>
-        <button @click="selectedChain='solana'" :class="selectedChain==='solana'?'bg-cardBgLight dark:bg-cardBgDark text-amberAccent shadow-sm':'text-gray-500 hover:text-gray-900 dark:hover:text-gray-200'" class="py-2 rounded-lg transition font-semibold">Solana Ecosystem</button>
-      </div>
-      <div class="space-y-2.5">
-        <template x-if="selectedChain==='evm'">
-          <div class="space-y-2">
-            <button @click="connectBrowserWallet('metamask')" class="w-full flex items-center justify-between p-3.5 bg-gray-50 dark:bg-zinc-900/60 hover:bg-amberGlow border border-cardBorderLight dark:border-cardBorderDark rounded-xl transition group text-left">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center p-1.5">
-                  <svg viewBox="0 0 318.6 318.6" fill="none"><path d="M274.1 35.5L174.6 109.4L193 6.5C193.8 1.9 188.3-1.3 184.8 1.8L111.3 66.8L129.8 6.5C130.6 1.9 125.1-1.3 121.6 1.8L22.1 35.5C18.4 36.8 16.5 41 18 44.7L60.5 150.3L2.4 191.6C-.8 193.9-.8 198.7 2.4 201L88.9 262.5C90.7 263.8 93 264.1 95 263.3L157.3 238.8C158.6 238.3 160 238.3 161.3 238.8L223.6 263.3C225.6 264.1 227.9 263.8 229.7 262.5L316.2 201C319.4 198.7 319.4 193.9 316.2 191.6L258.1 150.3L300.6 44.7C302.1 41 300.2 36.8 296.5 35.5H274.1Z" fill="#E17726"/></svg>
-                </div>
-                <div><div class="text-xs font-bold text-gray-900 dark:text-white">MetaMask</div><div class="text-[10px] text-subtleTextLight dark:text-subtleTextDark font-mono">Injected EVM Provider</div></div>
+
+      <!-- Choose mode -->
+      <template x-if="authMode === 'choose'">
+        <div class="space-y-4">
+          <!-- Google -->
+          <button @click="signInWithGoogle()" :disabled="isGoogleLoading" class="w-full flex items-center justify-between p-3.5 bg-gray-50 dark:bg-zinc-900/60 hover:bg-amberGlow border border-cardBorderLight dark:border-cardBorderDark rounded-xl transition group text-left">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center p-1.5">
+                <svg viewBox="0 0 24 24" class="w-5 h-5"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
               </div>
+              <div><div class="text-xs font-bold text-gray-900 dark:text-white">Continue with Google</div><div class="text-[10px] text-subtleTextLight dark:text-subtleTextDark font-mono">One-click sign in</div></div>
+            </div>
+            <template x-if="isGoogleLoading">
+              <svg class="animate-spin w-4 h-4 text-amberAccent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+            </template>
+            <template x-if="!isGoogleLoading">
               <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:translate-x-1 transition-transform"></i>
-            </button>
-            <button @click="connectBrowserWallet('coinbase')" class="w-full flex items-center justify-between p-3.5 bg-gray-50 dark:bg-zinc-900/60 hover:bg-amberGlow border border-cardBorderLight dark:border-cardBorderDark rounded-xl transition group text-left">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center p-1.5">
-                  <svg viewBox="0 0 1024 1024" fill="none"><circle cx="512" cy="512" r="512" fill="#0052FF"/><path d="M512 212C346.3 212 212 346.3 212 512s134.3 300 300 300 300-134.3 300-300S677.7 212 512 212zM432 602c-11 0-20-9-20-20V442c0-11 9-20 20-20h160c11 0 20 9 20 20v140c0 11-9 20-20 20H432z" fill="white"/></svg>
-                </div>
-                <div><div class="text-xs font-bold text-gray-900 dark:text-white">Coinbase Wallet</div><div class="text-[10px] text-subtleTextLight dark:text-subtleTextDark font-mono">SDK & Extension</div></div>
-              </div>
-              <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:translate-x-1 transition-transform"></i>
+            </template>
+          </button>
+
+          <!-- Divider -->
+          <div class="flex items-center gap-3 text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">
+            <div class="flex-1 h-px bg-cardBorderLight dark:bg-cardBorderDark"></div>
+            <span>OR</span>
+            <div class="flex-1 h-px bg-cardBorderLight dark:bg-cardBorderDark"></div>
+          </div>
+
+          <!-- Email OTP -->
+          <div class="space-y-3">
+            <label class="text-xs font-mono font-bold text-gray-700 dark:text-gray-300">Email Address</label>
+            <input
+              type="email"
+              x-model="emailInput"
+              @keydown.enter="sendOtp()"
+              placeholder="you@example.com"
+              class="w-full bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark rounded-xl px-4 py-3 text-xs font-mono focus:outline-none focus:border-amberAccent text-gray-900 dark:text-white transition"
+            />
+            <button @click="sendOtp()" :disabled="!emailInput || isSendingOtp" class="w-full py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-black hover:opacity-90 transition disabled:opacity-50">
+              <template x-if="!isSendingOtp">
+                <span class="flex items-center gap-2"><i data-lucide="mail" class="w-4 h-4"></i> Send Verification Code</span>
+              </template>
+              <template x-if="isSendingOtp">
+                <span class="flex items-center gap-2"><svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg> Sending...</span>
+              </template>
             </button>
           </div>
-        </template>
-        <template x-if="selectedChain==='solana'">
-          <div class="space-y-2">
-            <button @click="connectSolanaWallet('backpack')" class="w-full flex items-center justify-between p-3.5 bg-gray-50 dark:bg-zinc-900/60 hover:bg-amberGlow border border-cardBorderLight dark:border-cardBorderDark rounded-xl transition group text-left">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center p-1.5">
-                  <svg viewBox="0 0 120 120" fill="none"><rect width="120" height="120" rx="28" fill="#E33E38"/><path d="M35 38a7 7 0 017-7h36a7 7 0 017 7v44a7 7 0 01-7 7H42a7 7 0 01-7-7V38z" fill="white"/><path d="M45 45h30v10H45z" fill="#E33E38"/></svg>
-                </div>
-                <div><div class="text-xs font-bold text-gray-900 dark:text-white">Backpack</div><div class="text-[10px] text-subtleTextLight dark:text-subtleTextDark font-mono">Solana & xNFT Native</div></div>
-              </div>
-              <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:translate-x-1 transition-transform"></i>
-            </button>
-            <button @click="connectSolanaWallet('phantom')" class="w-full flex items-center justify-between p-3.5 bg-gray-50 dark:bg-zinc-900/60 hover:bg-amberGlow border border-cardBorderLight dark:border-cardBorderDark rounded-xl transition group text-left">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center p-1.5">
-                  <svg viewBox="0 0 128 128" fill="none"><circle cx="64" cy="64" r="64" fill="#AB9FF2"/><path d="M100.5 64C100.5 83.6 84.6 99.5 65 99.5c-11.3 0-21.3-5.3-27.8-13.5-1.2-1.5.2-3.5 2-3.1 5.5 1.1 11.2.6 16.4-1.6 8.8-3.7 14.7-11.7 15.4-21.2.8-10.1-4.2-19.3-12.5-23.7C55.1 34.6 51.1 33.5 47 33.5c-15.7 0-28.5 12.8-28.5 28.5 0 .8 0 1.7.1 2.5.1 1.4-1.4 2.5-2.8 2-.5-.2-1-.5-1.5-1C13.1 64.1 12.4 62.4 12.4 60.5 12.4 44.5 25.4 31.5 41.5 31.5c4.8 0 9.4 1.2 13.4 3.3C67.1 41.2 75 53.8 75 68c0 10-4.2 18.9-10.9 25.3-1.3 1.2-.3 3.4 1.4 3.3.7-.1 1.3-.1 2-.1C84.6 96.5 98.5 82.6 98.5 66.5c0-.8 0-1.6-.1-2.5-.1-1.5 1.5-2.6 2.9-1.9 1.5.7 1.7 2.5 1.7 4 0 .6-.1 1.3-.1 2-.1-.1-.3-.1-.4-.1z" fill="white"/></svg>
-                </div>
-                <div><div class="text-xs font-bold text-gray-900 dark:text-white">Phantom</div><div class="text-[10px] text-subtleTextLight dark:text-subtleTextDark font-mono">Solana Extension</div></div>
-              </div>
-              <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:translate-x-1 transition-transform"></i>
-            </button>
+        </div>
+      </template>
+
+      <!-- OTP verification -->
+      <template x-if="authMode === 'otp'">
+        <div class="space-y-4">
+          <div class="text-center space-y-2">
+            <div class="w-12 h-12 rounded-full bg-amberAccent/10 border border-amberAccent/30 flex items-center justify-center mx-auto">
+              <i data-lucide="shield-check" class="w-6 h-6 text-amberAccent"></i>
+            </div>
+            <h4 class="text-sm font-bold text-gray-900 dark:text-white">Check your email</h4>
+            <p class="text-[11px] text-subtleTextLight dark:text-subtleTextDark">We sent a 6-digit code to<br><span class="font-bold text-gray-900 dark:text-white" x-text="emailInput"></span></p>
           </div>
-        </template>
-      </div>
+          <input
+            type="text"
+            x-model="otpInput"
+            @keydown.enter="verifyOtp()"
+            placeholder="000000"
+            maxlength="6"
+            class="w-full bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark rounded-xl px-4 py-3.5 text-center text-lg font-mono tracking-[0.5em] focus:outline-none focus:border-amberAccent text-gray-900 dark:text-white transition"
+          />
+          <template x-if="otpError">
+            <p class="text-[11px] font-mono text-red-500 text-center" x-text="otpError"></p>
+          </template>
+          <button @click="verifyOtp()" :disabled="otpInput.length < 6 || isVerifyingOtp" class="w-full py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2 btn-amber-metallic disabled:opacity-50">
+            <template x-if="!isVerifyingOtp">
+              <span class="flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> Verify & Sign In</span>
+            </template>
+            <template x-if="isVerifyingOtp">
+              <span class="flex items-center gap-2"><svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg> Verifying...</span>
+            </template>
+          </button>
+          <button @click="resetOtpFlow()" class="w-full text-center text-[11px] font-mono text-subtleTextLight dark:text-subtleTextDark hover:text-amberAccent transition">
+            ← Use a different email
+          </button>
+        </div>
+      </template>
+
+      <!-- Error -->
+      <template x-if="authError">
+        <div class="p-3 rounded-xl border border-red-500/40 bg-red-500/10 text-red-500 text-xs font-mono text-center" x-text="authError"></div>
+      </template>
+
+      <!-- Footer -->
       <div class="pt-2 border-t border-cardBorderLight dark:border-cardBorderDark flex items-center justify-between text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">
-        <span class="flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3 text-amberAccent"></i> Non-custodial</span>
+        <span class="flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3 text-amberAccent"></i> Secured by Supabase</span>
         <span>Eunomia v1.0</span>
       </div>
     </div>

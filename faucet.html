@@ -16,8 +16,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+  <script src="js/auth.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
   <link rel="stylesheet" href="css/styles.css">
@@ -68,6 +71,15 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
         </template>
       </button>
+      <!-- Auth badge -->
+      <template x-if="isAuthenticated">
+        <div class="bg-cardBgLight/80 dark:bg-cardBgDark/80 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark rounded-full px-4 py-2 shadow-lg text-xs font-mono font-semibold flex items-center gap-2 text-gray-800 dark:text-gray-100">
+          <template x-if="userAvatar">
+            <img :src="userAvatar" class="w-4 h-4 rounded-full object-cover" alt="" />
+          </template>
+          <span x-text="userDisplayName"></span>
+        </div>
+      </template>
       <a href="onboard.html" class="bg-cardBgLight/90 dark:bg-cardBgDark/90 backdrop-blur-md border border-cardBorderLight dark:border-cardBorderDark hover:border-amberAccent/60 rounded-full px-5 py-2.5 shadow-lg text-xs font-mono font-semibold flex items-center gap-2 text-gray-800 dark:text-gray-100 transition">
         <i data-lucide="arrow-left" class="w-4 h-4 text-amberAccent"></i>
         Back to Gateway
@@ -147,7 +159,7 @@
         <div class="relative">
           <input
             type="text"
-            x-model="walletAddress"
+            x-model="claimAddress"
             @input="validate()"
             placeholder="0x..."
             class="w-full bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark rounded-xl px-4 py-3 pr-10 text-xs font-mono focus:outline-none focus:border-amberAccent text-gray-900 dark:text-white transition"
@@ -239,59 +251,51 @@
   </footer>
 
   <script>
+    // Faucet state — inherits auth from auth.js
     document.addEventListener('alpine:init', () => {
       Alpine.data('faucetState', () => ({
-        darkMode:      localStorage.getItem('eunomia-theme') !== 'light',
-        walletAddress: '',
-        addressStatus: 'idle', // idle | valid | invalid
+        ...createAuthState(),
+        claimAddress: '',
+        addressStatus: 'idle',
         isClaiming:    false,
         claimed:       false,
         claimError:    '',
         ethTxHash:     '',
         eunTxHash:     '',
-
-        toggleTheme() {
-          this.darkMode = !this.darkMode;
-          document.documentElement.classList.toggle('dark', this.darkMode);
-          localStorage.setItem('eunomia-theme', this.darkMode ? 'dark' : 'light');
-        },
-
         validate() {
-          const addr = this.walletAddress.trim();
+          const addr = this.claimAddress.trim();
           if (!addr) { this.addressStatus = 'idle'; return; }
           this.addressStatus = /^0x[a-fA-F0-9]{40}$/.test(addr) ? 'valid' : 'invalid';
         },
-
         async claim() {
           if (this.addressStatus !== 'valid' || this.isClaiming) return;
           this.isClaiming = true;
           this.claimError = '';
-
           try {
             const res = await fetch(
               'https://olbklffxzqfqyfbmrmrk.supabase.co/functions/v1/faucet-claim',
               {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ walletAddress: this.walletAddress.trim() }),
+                body:    JSON.stringify({ walletAddress: this.claimAddress.trim() }),
               }
             );
             const data = await res.json();
-
             if (!res.ok) {
               this.claimError = data.error || 'Claim failed. Please try again.';
               return;
             }
-
             this.claimed    = true;
             this.ethTxHash  = data.ethTxHash;
             this.eunTxHash  = data.eunTxHash;
-
           } catch {
             this.claimError = 'Network error. Check your connection and try again.';
           } finally {
             this.isClaiming = false;
           }
+        },
+        init() {
+          this.initAuth();
         },
       }));
     });
