@@ -17,9 +17,8 @@
   <script>
     (function() {
       const SUPABASE_URL = 'https://olbklffxzqfqyfbmrmrk.supabase.co';
-      const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
-      // Quick session check — if no session, redirect to home
-      if (window.supabase && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE') {
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9sYmtsZmZ4enFmcXlmYm1ybXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNDY2MTksImV4cCI6MjEwMDcyMjYxOX0.A1UCt-AG4pi-2AfLnRuqlGPha8U6wqFqi4o_TIes1UI';
+      if (window.supabase) {
         const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         client.auth.getSession().then(({ data }) => {
           if (!data.session) window.location.href = '/';
@@ -162,7 +161,7 @@
             <li class="flex items-center gap-2 text-subtleTextLight dark:text-subtleTextDark"><i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-40"></i> Status: Ready for Payload</li>
           </ul>
         </div>
-        <button class="btn-white-metallic card-content-3d w-full py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2">
+        <button @click="completeWorkspaceSelection()" class="btn-white-metallic card-content-3d w-full py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2">
           <span>LAUNCH TERMINAL</span>
           <i data-lucide="arrow-right" class="w-4 h-4 text-amberAccent"></i>
         </button>
@@ -184,7 +183,7 @@
             <li class="flex items-center gap-2 text-subtleTextLight dark:text-subtleTextDark"><i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-40"></i> Quorum Threshold: 85%</li>
           </ul>
         </div>
-        <button class="btn-white-metallic card-content-3d w-full py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2">
+        <button @click="completeWorkspaceSelection()" class="btn-white-metallic card-content-3d w-full py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2">
           <span>ENTER QUORUM QUEUE</span>
           <i data-lucide="arrow-right" class="w-4 h-4 text-amberAccent"></i>
         </button>
@@ -214,7 +213,7 @@
             <li class="flex items-center gap-2 text-amberAccent font-bold"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Cryptographic Attestation</li>
           </ul>
         </div>
-        <button class="btn-amber-metallic card-content-3d w-full py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2">
+        <button @click="completeWorkspaceSelection()" class="btn-amber-metallic card-content-3d w-full py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2">
           <span>GENERATE LEGAL DOSSIER</span>
           <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </button>
@@ -347,10 +346,10 @@
           localStorage.setItem('eunomia-theme', this.darkMode ? 'dark' : 'light');
           if (window.update3DTheme) window.update3DTheme(this.darkMode);
         },
-        init() {
-          this.initAuth();
+        async init() {
           this.initEns();
-          // Check if user needs ENS registration
+          await this.initAuth();
+          // Check ENS after auth completes
           this.checkEnsRequirement();
         },
         checkEnsRequirement() {
