@@ -195,7 +195,7 @@ function createAuthState() {
       try {
         const { error } = await _supabaseClient.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: window.location.origin + '/onboard.html' }
+          options: { redirectTo: 'https://eunomia-protocol.netlify.app/onboard.html' }
         });
         if (error) throw error;
       } catch (e) {
@@ -218,7 +218,10 @@ function createAuthState() {
       try {
         const { error } = await _supabaseClient.auth.signInWithOtp({
           email,
-          options: { shouldCreateUser: true }
+          options: { 
+            shouldCreateUser: true,
+            emailRedirectTo: 'https://eunomia-protocol.netlify.app/onboard.html'
+          }
         });
         if (error) throw error;
         this.otpSent = true;
