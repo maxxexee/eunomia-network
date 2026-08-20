@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eunomia // DAO Governance Quorum</title>
+  <script src="js/theme-init.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/tailwind.config.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .btn-amber-metallic { background: linear-gradient(135deg, #D97706 0%, #B45309 100%); color: #FFF; box-shadow: 0 4px 20px rgba(217,119,6,0.25); border: 1px solid rgba(245,158,11,0.5); }
+    .btn-amber-metallic:hover { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); transform: translateY(-1px); }
+    .vote-btn { transition: all 0.2s ease; }
+    .vote-btn:hover { transform: scale(1.02); }
+  </style>
+</head>
+<body x-data="daoState" class="bg-bgLight dark:bg-bgDark text-gray-900 dark:text-white font-sans antialiased min-h-screen">
+
+  <!-- NAV -->
+  <header class="w-full z-40 px-6 py-3 flex items-center justify-between border-b border-cardBorderLight dark:border-cardBorderDark bg-cardBgLight/70 dark:bg-cardBgDark/70 backdrop-blur-md sticky top-0">
+    <div class="flex items-center gap-4">
+      <a href="onboard.html" class="flex items-center gap-2 text-subtleTextLight dark:text-subtleTextDark hover:text-amberAccent transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        <span class="text-[11px] font-mono hidden sm:inline">Back</span>
+      </a>
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 bg-amberAccent rounded-full animate-pulse"></span>
+        <span class="text-xs font-bold tracking-wider text-gray-800 dark:text-gray-200 uppercase font-mono">
+          DAO <span class="text-amberAccent">// GOVERNANCE</span>
+        </span>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark" x-text="walletAddress ? walletAddress.slice(0,6) + '...' + walletAddress.slice(-4) : ''"></span>
+      <span class="text-[10px] font-mono text-amberAccent font-bold">100 $EU</span>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+
+    <!-- QUORUM STATUS -->
+    <div class="bg-cardBgLight dark:bg-cardBgDark border border-amberAccent/30 rounded-2xl p-6 glow-pulse">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <div class="text-[10px] font-mono text-amberAccent uppercase tracking-wider mb-1">Active Quorum Session</div>
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white">Threat Review #247 — Drainer Contract</h2>
+          <p class="text-[11px] text-subtleTextLight dark:text-subtleTextDark mt-1">Target: <span class="text-amberAccent font-mono">0x8f2d9101b44c219a11e8bc7d6209aef100a7</span></p>
+        </div>
+        <div class="text-right">
+          <div class="text-2xl font-bold text-emerald-500">92%</div>
+          <div class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">Current Quorum</div>
+        </div>
+      </div>
+      
+      <!-- Progress bar -->
+      <div class="mt-4 bg-gray-200 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+        <div class="h-full bg-gradient-to-r from-amberAccent to-emerald-500 rounded-full transition-all duration-1000" style="width: 92%"></div>
+      </div>
+      <div class="flex justify-between mt-2 text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">
+        <span>23/25 votes received</span>
+        <span>Threshold: 85%</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- VOTING PANEL -->
+      <div class="lg:col-span-2 bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 space-y-4">
+        <div class="flex items-center gap-2 mb-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+          <h2 class="text-sm font-bold text-gray-900 dark:text-white">Cast Your Vote</h2>
+        </div>
+
+        <!-- Evidence Summary -->
+        <div class="bg-gray-50 dark:bg-zinc-900 rounded-xl p-4 space-y-3">
+          <div class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark uppercase tracking-wider">Evidence Summary</div>
+          <div class="grid grid-cols-2 gap-3 text-[11px] font-mono">
+            <div><span class="text-subtleTextLight dark:text-subtleTextDark">Hunter:</span> <span class="text-gray-900 dark:text-white">maxx.eth</span></div>
+            <div><span class="text-subtleTextLight dark:text-subtleTextDark">Stake:</span> <span class="text-amberAccent">10 $EU</span></div>
+            <div><span class="text-subtleTextLight dark:text-subtleTextDark">Severity:</span> <span class="text-red-500 font-bold">CRITICAL</span></div>
+            <div><span class="text-subtleTextLight dark:text-subtleTextDark">Victims:</span> <span class="text-gray-900 dark:text-white">12 wallets</span></div>
+          </div>
+          <p class="text-[11px] text-gray-700 dark:text-gray-300 leading-relaxed border-t border-cardBorderLight dark:border-cardBorderDark pt-3">
+            Contract at <span class="font-mono text-amberAccent">0x8f2d...a891</span> implements a drainer mechanism that approves unlimited token transfers when users interact with the contract. On-chain telemetry shows 12 victim wallets with combined losses of ~$45,000 in the last 24 hours.
+          </p>
+        </div>
+
+        <!-- Vote Buttons -->
+        <div class="grid grid-cols-3 gap-3 pt-2">
+          <button @click="castVote('verify')" :class="userVote === 'verify' ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-gray-50 dark:bg-zinc-900 border-cardBorderLight dark:border-cardBorderDark text-gray-700 dark:text-gray-300 hover:border-emerald-500/50'" class="vote-btn p-4 rounded-xl border text-center transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+            <div class="text-xs font-bold">Verify</div>
+            <div class="text-[9px] opacity-70">Confirm threat</div>
+          </button>
+          <button @click="castVote('reject')" :class="userVote === 'reject' ? 'bg-red-500 border-red-500 text-white' : 'bg-gray-50 dark:bg-zinc-900 border-cardBorderLight dark:border-cardBorderDark text-gray-700 dark:text-gray-300 hover:border-red-500/50'" class="vote-btn p-4 rounded-xl border text-center transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+            <div class="text-xs font-bold">Reject</div>
+            <div class="text-[9px] opacity-70">Insufficient evidence</div>
+          </button>
+          <button @click="castVote('escalate')" :class="userVote === 'escalate' ? 'bg-amberAccent border-amberAccent text-white' : 'bg-gray-50 dark:bg-zinc-900 border-cardBorderLight dark:border-cardBorderDark text-gray-700 dark:text-gray-300 hover:border-amberAccent/50'" class="vote-btn p-4 rounded-xl border text-center transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mx-auto mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            <div class="text-xs font-bold">Escalate</div>
+            <div class="text-[9px] opacity-70">Needs more review</div>
+          </button>
+        </div>
+
+        <template x-if="userVote">
+          <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-center">
+            <p class="text-xs font-mono text-emerald-500 font-bold">✓ Vote recorded: <span x-text="userVote.toUpperCase()"></span></p>
+          </div>
+        </template>
+      </div>
+
+      <!-- QUORUM PARTICIPANTS -->
+      <div class="bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 space-y-4">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-sm font-bold text-gray-900 dark:text-white">Quorum Voters</h2>
+          <span class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">25 members</span>
+        </div>
+        
+        <div class="space-y-2 max-h-80 overflow-y-auto">
+          <template x-for="(voter, i) in voters" :key="i">
+            <div class="flex items-center justify-between py-2 border-b border-cardBorderLight/50 dark:border-cardBorderDark/50">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold" :class="{
+                  'bg-emerald-500/20 text-emerald-500': voter.vote === 'verify',
+                  'bg-red-500/20 text-red-500': voter.vote === 'reject',
+                  'bg-amberAccent/20 text-amberAccent': voter.vote === 'escalate',
+                  'bg-gray-200 dark:bg-zinc-800 text-gray-400': !voter.vote
+                }" x-text="voter.name[0]"></span>
+                <div>
+                  <div class="text-[11px] font-mono text-gray-900 dark:text-white" x-text="voter.name"></div>
+                  <div class="text-[9px] font-mono text-subtleTextLight dark:text-subtleTextDark" x-text="voter.stake + ' $EU stake'"></div>
+                </div>
+              </div>
+              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded" :class="{
+                'bg-emerald-500/20 text-emerald-500': voter.vote === 'verify',
+                'bg-red-500/20 text-red-500': voter.vote === 'reject',
+                'bg-amberAccent/20 text-amberAccent': voter.vote === 'escalate',
+                'bg-gray-200 dark:bg-zinc-800 text-gray-400': !voter.vote
+              }" x-text="voter.vote ? voter.vote.toUpperCase() : 'Pending'"></span>
+            </div>
+          </template>
+        </div>
+
+        <!-- Pending Rewards -->
+        <div class="border-t border-cardBorderLight dark:border-cardBorderDark pt-4 mt-4">
+          <div class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark uppercase tracking-wider mb-2">Your Voting Rewards</div>
+          <div class="bg-gray-50 dark:bg-zinc-900 rounded-xl p-3 text-center">
+            <div class="text-lg font-bold text-amberAccent">25 $EU</div>
+            <div class="text-[10px] text-subtleTextLight dark:text-subtleTextDark">earned from 8 votes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAST QUORUMS -->
+    <div class="bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6">
+      <h2 class="text-sm font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Recent Quorum Results
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <template x-for="(q, i) in pastQuorums" :key="i">
+          <div class="bg-gray-50 dark:bg-zinc-900/50 border border-cardBorderLight dark:border-cardBorderDark rounded-xl p-4 hover:border-amberAccent/30 transition">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-mono text-gray-900 dark:text-white font-bold" x-text="q.id"></span>
+              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded" :class="{
+                'bg-emerald-500/20 text-emerald-500': q.result === 'VERIFIED',
+                'bg-red-500/20 text-red-500': q.result === 'SLASHED'
+              }" x-text="q.result"></span>
+            </div>
+            <p class="text-[10px] text-subtleTextLight dark:text-subtleTextDark mb-2" x-text="q.desc"></p>
+            <div class="text-[9px] font-mono text-subtleTextLight dark:text-subtleTextDark">
+              Quorum: <span class="text-gray-900 dark:text-white" x-text="q.quorum + '%'"></span> • 
+              Bounty: <span class="text-amberAccent" x-text="q.bounty + ' $EU'"></span>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('daoState', () => ({
+        ...createAuthState(),
+        darkMode: localStorage.getItem('eunomia-theme') !== 'light',
+        userVote: null,
+        voters: [
+          { name: 'satoshi.eth', stake: 50, vote: 'verify' },
+          { name: 'vitalik.eth', stake: 100, vote: 'verify' },
+          { name: 'alice.sol', stake: 25, vote: 'verify' },
+          { name: 'bob.eth', stake: 30, vote: 'reject' },
+          { name: 'carol.eth', stake: 20, vote: 'verify' },
+          { name: 'dave.sol', stake: 40, vote: 'escalate' },
+          { name: 'eve.eth', stake: 15, vote: 'verify' },
+          { name: 'frank.eth', stake: 35, vote: null },
+        ],
+        pastQuorums: [
+          { id: '#QR-241', desc: 'Phishing proxy mimicking Uniswap', result: 'VERIFIED', quorum: 96, bounty: 75 },
+          { id: '#QR-238', desc: 'Rug pull — liquidity removal', result: 'SLASHED', quorum: 88, bounty: 0 },
+          { id: '#QR-235', desc: 'Flash loan exploit attempt', result: 'VERIFIED', quorum: 94, bounty: 120 },
+        ],
+        init() { this.initAuth(); },
+        castVote(vote) { this.userVote = vote; },
+      }));
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>

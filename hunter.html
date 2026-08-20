@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eunomia // Threat Hunter Terminal</title>
+  <script src="js/theme-init.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/tailwind.config.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .btn-amber-metallic { background: linear-gradient(135deg, #D97706 0%, #B45309 100%); color: #FFF; box-shadow: 0 4px 20px rgba(217,119,6,0.25); border: 1px solid rgba(245,158,11,0.5); }
+    .btn-amber-metallic:hover { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); transform: translateY(-1px); }
+    .scan-line { animation: scan 2s linear infinite; }
+    @keyframes scan { 0%{transform:translateY(-100%)} 100%{transform:translateY(100%)} }
+    .glow-pulse { animation: glowPulse 2s ease-in-out infinite; }
+    @keyframes glowPulse { 0%,100%{box-shadow:0 0 5px rgba(217,119,6,0.3)} 50%{box-shadow:0 0 20px rgba(217,119,6,0.6)} }
+  </style>
+</head>
+<body x-data="hunterState" class="bg-bgLight dark:bg-bgDark text-gray-900 dark:text-white font-sans antialiased min-h-screen">
+
+  <!-- NAV -->
+  <header class="w-full z-40 px-6 py-3 flex items-center justify-between border-b border-cardBorderLight dark:border-cardBorderDark bg-cardBgLight/70 dark:bg-cardBgDark/70 backdrop-blur-md sticky top-0">
+    <div class="flex items-center gap-4">
+      <a href="onboard.html" class="flex items-center gap-2 text-subtleTextLight dark:text-subtleTextDark hover:text-amberAccent transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        <span class="text-[11px] font-mono hidden sm:inline">Back</span>
+      </a>
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+        <span class="text-xs font-bold tracking-wider text-gray-800 dark:text-gray-200 uppercase font-mono">
+          THREAT HUNTER <span class="text-amberAccent">// TERMINAL</span>
+        </span>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark" x-text="walletAddress ? walletAddress.slice(0,6) + '...' + walletAddress.slice(-4) : ''"></span>
+      <span class="text-[10px] font-mono text-amberAccent font-bold">100 $EU</span>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+
+    <!-- STATUS BAR -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-xl p-4">
+        <div class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark mb-1">THREATS TODAY</div>
+        <div class="text-xl font-bold text-gray-900 dark:text-white">247</div>
+        <div class="text-[10px] font-mono text-red-500">↑ 12% from yesterday</div>
+      </div>
+      <div class="bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-xl p-4">
+        <div class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark mb-1">YOUR SUBMISSIONS</div>
+        <div class="text-xl font-bold text-amberAccent">3</div>
+        <div class="text-[10px] font-mono text-emerald-500">2 verified</div>
+      </div>
+      <div class="bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-xl p-4">
+        <div class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark mb-1">EARNINGS</div>
+        <div class="text-xl font-bold text-emerald-500">450 $EU</div>
+        <div class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">from bounties</div>
+      </div>
+      <div class="bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-xl p-4">
+        <div class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark mb-1">STAKE</div>
+        <div class="text-xl font-bold text-gray-900 dark:text-white">50 $EU</div>
+        <div class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">locked in 2 reports</div>
+      </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- SUBMIT THREAT -->
+      <div class="lg:col-span-2 bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 space-y-4">
+        <div class="flex items-center gap-2 mb-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          <h2 class="text-sm font-bold text-gray-900 dark:text-white">Submit Threat Report</h2>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark uppercase tracking-wider mb-1 block">Target Address</label>
+            <input x-model="submitForm.targetAddress" type="text" placeholder="0x..." class="w-full bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:border-amberAccent text-gray-900 dark:text-white transition">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark uppercase tracking-wider mb-1 block">Severity</label>
+              <select x-model="submitForm.severity" class="w-full bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:border-amberAccent text-gray-900 dark:text-white transition">
+                <option value="critical">🔴 Critical</option>
+                <option value="high">🟠 High</option>
+                <option value="medium">🟡 Medium</option>
+                <option value="low">🟢 Low</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark uppercase tracking-wider mb-1 block">Stake Amount</label>
+              <div class="relative">
+                <input x-model="submitForm.stake" type="number" value="10" min="5" max="100" class="w-full bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:border-amberAccent text-gray-900 dark:text-white transition">
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-amberAccent">$EU</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark uppercase tracking-wider mb-1 block">Evidence Description</label>
+            <textarea x-model="submitForm.description" rows="3" placeholder="Describe the malicious activity, include transaction hashes..." class="w-full bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:border-amberAccent text-gray-900 dark:text-white transition resize-none"></textarea>
+          </div>
+          <div>
+            <label class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark uppercase tracking-wider mb-1 block">Transaction Hash (optional)</label>
+            <input x-model="submitForm.txHash" type="text" placeholder="0x..." class="w-full bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:border-amberAccent text-gray-900 dark:text-white transition">
+          </div>
+        </div>
+
+        <button @click="submitThreat()" :disabled="!submitForm.targetAddress || isSubmitting" class="btn-amber-metallic w-full py-3 rounded-xl font-mono text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50">
+          <template x-if="!isSubmitting">
+            <span class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Submit Report & Stake 10 $EU
+            </span>
+          </template>
+          <template x-if="isSubmitting">
+            <span class="flex items-center gap-2">
+              <svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+              Submitting...
+            </span>
+          </template>
+        </button>
+
+        <template x-if="submitSuccess">
+          <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center">
+            <p class="text-xs font-mono text-emerald-500 font-bold">✓ Report Submitted Successfully</p>
+            <p class="text-[10px] text-subtleTextLight dark:text-subtleTextDark mt-1">DAO quorum will review within 24-48 hours</p>
+          </div>
+        </template>
+      </div>
+
+      <!-- QUICK SCAN -->
+      <div class="bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6 space-y-4">
+        <div class="flex items-center gap-2 mb-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 21-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"/></svg>
+          <h2 class="text-sm font-bold text-gray-900 dark:text-white">Quick Scan</h2>
+        </div>
+
+        <div class="relative">
+          <input x-model="scanAddress" type="text" placeholder="Enter wallet address..." class="w-full bg-gray-50 dark:bg-zinc-900 border border-cardBorderLight dark:border-cardBorderDark rounded-xl px-4 py-2.5 pr-12 text-xs font-mono focus:outline-none focus:border-amberAccent text-gray-900 dark:text-white transition">
+          <button @click="scanAddress()" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-amberAccent/10 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 21-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"/></svg>
+          </button>
+        </div>
+
+        <!-- Scan Result -->
+        <template x-if="scanResult">
+          <div class="space-y-3">
+            <div class="border-t border-cardBorderLight dark:border-cardBorderDark pt-4">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">THREAT LEVEL</span>
+                <span class="text-xs font-mono font-bold px-2 py-0.5 rounded" :class="{
+                  'bg-red-500/20 text-red-500': scanResult.level === 'CRITICAL',
+                  'bg-amber-500/20 text-amber-500': scanResult.level === 'HIGH',
+                  'bg-indigo-500/20 text-indigo-500': scanResult.level === 'MEDIUM',
+                  'bg-emerald-500/20 text-emerald-500': scanResult.level === 'LOW'
+                }" x-text="scanResult.level"></span>
+              </div>
+              <div class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark space-y-1">
+                <div class="flex justify-between"><span>Reports:</span><span class="text-gray-900 dark:text-white" x-text="scanResult.reports"></span></div>
+                <div class="flex justify-between"><span>Confidence:</span><span class="text-gray-900 dark:text-white" x-text="scanResult.confidence + '%'"></span></div>
+                <div class="flex justify-between"><span>DAO Status:</span><span class="text-amberAccent" x-text="scanResult.daoStatus"></span></div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Recent Activity -->
+        <div class="border-t border-cardBorderLight dark:border-cardBorderDark pt-4">
+          <h3 class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark uppercase tracking-wider mb-3">Recent Network Threats</h3>
+          <div class="space-y-2">
+            <template x-for="(threat, i) in recentThreats" :key="i">
+              <div class="bg-gray-50 dark:bg-zinc-900/50 border border-cardBorderLight dark:border-cardBorderDark rounded-lg p-3 hover:border-amberAccent/30 transition cursor-pointer">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[10px] font-mono text-gray-900 dark:text-white font-bold" x-text="threat.address"></span>
+                  <span class="text-[9px] font-mono px-1.5 py-0.5 rounded" :class="{
+                    'bg-red-500/20 text-red-500': threat.level === 'CRITICAL',
+                    'bg-amber-500/20 text-amber-500': threat.level === 'HIGH'
+                  }" x-text="threat.level"></span>
+                </div>
+                <p class="text-[10px] text-subtleTextLight dark:text-subtleTextDark" x-text="threat.desc"></p>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- YOUR SUBMISSIONS -->
+    <div class="bg-cardBgLight dark:bg-cardBgDark border border-cardBorderLight dark:border-cardBorderDark rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amberAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+          Your Submissions
+        </h2>
+        <span class="text-[10px] font-mono text-subtleTextLight dark:text-subtleTextDark">3 total</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-[11px] font-mono">
+          <thead>
+            <tr class="text-subtleTextLight dark:text-subtleTextDark border-b border-cardBorderLight dark:border-cardBorderDark">
+              <th class="text-left py-2 pr-4">Report</th>
+              <th class="text-left py-2 pr-4">Target</th>
+              <th class="text-left py-2 pr-4">Severity</th>
+              <th class="text-left py-2 pr-4">Status</th>
+              <th class="text-left py-2">Stake</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="(sub, i) in submissions" :key="i">
+              <tr class="border-b border-cardBorderLight/50 dark:border-cardBorderDark/50 hover:bg-gray-50 dark:hover:bg-zinc-900/30 transition">
+                <td class="py-3 pr-4 text-gray-900 dark:text-white" x-text="sub.id"></td>
+                <td class="py-3 pr-4 text-amberAccent" x-text="sub.target"></td>
+                <td class="py-3 pr-4">
+                  <span class="px-1.5 py-0.5 rounded text-[9px]" :class="{
+                    'bg-red-500/20 text-red-500': sub.severity === 'CRITICAL',
+                    'bg-amber-500/20 text-amber-500': sub.severity === 'HIGH'
+                  }" x-text="sub.severity"></span>
+                </td>
+                <td class="py-3 pr-4">
+                  <span class="flex items-center gap-1" :class="{
+                    'text-emerald-500': sub.status === 'Verified',
+                    'text-amberAccent': sub.status === 'Pending',
+                    'text-gray-500': sub.status === 'Under Review'
+                  }">
+                    <span class="w-1.5 h-1.5 rounded-full" :class="{
+                      'bg-emerald-500': sub.status === 'Verified',
+                      'bg-amberAccent': sub.status === 'Pending',
+                      'bg-gray-500': sub.status === 'Under Review'
+                    }"></span>
+                    <span x-text="sub.status"></span>
+                  </span>
+                </td>
+                <td class="py-3 text-gray-900 dark:text-white" x-text="sub.stake + ' $EU'"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('hunterState', () => ({
+        ...createAuthState(),
+        darkMode: localStorage.getItem('eunomia-theme') !== 'light',
+        
+        // Submit form
+        submitForm: { targetAddress: '', severity: 'high', stake: 10, description: '', txHash: '' },
+        isSubmitting: false,
+        submitSuccess: false,
+
+        // Quick scan
+        scanAddress: '',
+        scanResult: null,
+
+        // Data
+        recentThreats: [
+          { address: '0x8f2d...a891', level: 'CRITICAL', desc: 'Suspected drainer contract — 12 victims in 24h' },
+          { address: '0x3b7c...e4f2', level: 'HIGH', desc: 'Phishing proxy — mimics Uniswap router' },
+          { address: '0x9a1e...7c3d', level: 'CRITICAL', desc: 'Rug pull in progress — liquidity removing' },
+        ],
+
+        submissions: [
+          { id: '#EUN-247', target: '0x8f2d...a891', severity: 'CRITICAL', status: 'Verified', stake: 10 },
+          { id: '#EUN-231', target: '0x3b7c...e4f2', severity: 'HIGH', status: 'Pending', stake: 10 },
+          { id: '#EUN-218', target: '0x9a1e...7c3d', severity: 'CRITICAL', status: 'Under Review', stake: 10 },
+        ],
+
+        init() { this.initAuth(); },
+
+        async submitThreat() {
+          if (!this.submitForm.targetAddress) return;
+          this.isSubmitting = true;
+          this.submitSuccess = false;
+          // Simulate submission
+          await new Promise(r => setTimeout(r, 2000));
+          this.isSubmitting = false;
+          this.submitSuccess = true;
+          this.submitForm = { targetAddress: '', severity: 'high', stake: 10, description: '', txHash: '' };
+          setTimeout(() => this.submitSuccess = false, 5000);
+        },
+
+        async scanAddress() {
+          if (!this.scanAddress) return;
+          // Simulate scan
+          await new Promise(r => setTimeout(r, 1000));
+          this.scanResult = {
+            level: 'HIGH',
+            reports: 3,
+            confidence: 87,
+            daoStatus: 'Under Review'
+          };
+        },
+      }));
+    });
+    lucide.createIcons();
+  </script>
+</body>
+</html>
