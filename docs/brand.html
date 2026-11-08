@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Eunomia brand artboards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080808;
+    --card: #111111;
+    --line: #1f1f1f;
+    --text: #f4f4f5;
+    --muted: #9a9a9a;
+    --amber: #d97706;
+    --amber-light: #f59e0b;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .board {
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+    display: none;
+  }
+
+  .board.is-active { display: block; }
+
+  .glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+  }
+
+  .grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(ellipse at 60% 50%, #000 20%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at 60% 50%, #000 20%, transparent 75%);
+  }
+
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+  /* ---------- banner 2560 x 800 ---------- */
+  #banner {
+    width: 2560px;
+    height: 800px;
+  }
+
+  #banner .inner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    padding: 0 160px;
+    gap: 120px;
+  }
+
+  #banner .glow-a {
+    width: 900px; height: 900px; left: -220px; top: -420px;
+    background: rgba(217, 119, 6, 0.16);
+  }
+
+  #banner .glow-b {
+    width: 700px; height: 700px; right: -140px; bottom: -380px;
+    background: rgba(245, 158, 11, 0.10);
+  }
+
+  .copy { max-width: 1180px; position: relative; z-index: 2; }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 22px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--amber-light);
+    font-weight: 600;
+    margin-bottom: 34px;
+  }
+
+  .eyebrow span.rule {
+    width: 64px; height: 2px; background: var(--amber); display: inline-block;
+  }
+
+  h1 {
+    margin: 0 0 30px;
+    font-size: 132px;
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    font-weight: 700;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--amber-light);
+  }
+
+  .lede {
+    margin: 0;
+    font-size: 34px;
+    line-height: 1.45;
+    color: var(--muted);
+    font-weight: 400;
+    max-width: 1000px;
+  }
+
+  .rule-row {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    margin-top: 54px;
+    font-size: 21px;
+    letter-spacing: 0.06em;
+    color: #74747a;
+  }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); }
+
+  /* report card mock */
+  .card {
+    position: relative;
+    z-index: 2;
+    flex: 0 0 760px;
+    background: linear-gradient(160deg, #141414 0%, #0d0d0d 100%);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    padding: 52px 56px;
+    box-shadow: 0 40px 120px -40px rgba(0, 0, 0, 0.9);
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 44px;
+  }
+
+  .card-title {
+    font-size: 21px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #6f6f76;
+    font-weight: 600;
+  }
+
+  .chip {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 18px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: var(--amber-light);
+    background: rgba(217, 119, 6, 0.10);
+    letter-spacing: 0.04em;
+  }
+
+  .gauge {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 10px;
+  }
+
+  .gauge strong {
+    font-size: 92px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+
+  .gauge span { font-size: 24px; color: #6f6f76; }
+
+  .track {
+    height: 10px;
+    border-radius: 999px;
+    background: #1c1c1c;
+    overflow: hidden;
+    margin: 30px 0 44px;
+  }
+
+  .track i {
+    display: block;
+    height: 100%;
+    width: 78%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #b45309 0%, #f59e0b 100%);
+  }
+
+  .rows { display: grid; gap: 22px; }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 20px;
+    color: #b4b4b9;
+    border-top: 1px solid var(--line);
+    padding-top: 22px;
+  }
+
+  .row:first-child { border-top: 1px solid var(--line); }
+  .row b { font-weight: 600; color: #f4f4f5; }
+
+  .row .tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 16px;
+    color: #8a8a92;
+    letter-spacing: 0.05em;
+  }
+
+  /* ---------- social 1280 x 640 ---------- */
+  #social {
+    width: 1280px;
+    height: 640px;
+  }
+
+  #social .inner {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 90px;
+  }
+
+  #social .glow-a {
+    width: 620px; height: 620px; left: 50%; top: -300px; transform: translateX(-50%);
+    background: rgba(217, 119, 6, 0.18);
+  }
+
+  #social h2 {
+    position: relative;
+    z-index: 2;
+    margin: 0 0 22px;
+    font-size: 92px;
+    letter-spacing: -0.035em;
+    font-weight: 700;
+  }
+
+  #social h2 em { font-style: normal; color: var(--amber-light); }
+
+  #social p {
+    position: relative;
+    z-index: 2;
+    margin: 0;
+    font-size: 27px;
+    color: var(--muted);
+    max-width: 880px;
+    line-height: 1.5;
+  }
+
+  #social .eyebrow { font-size: 17px; margin-bottom: 26px; }
+
+  #social .foot {
+    position: relative;
+    z-index: 2;
+    margin-top: 44px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 17px;
+    letter-spacing: 0.14em;
+    color: #6f6f76;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+  <section id="banner" class="board">
+    <div class="glow glow-a"></div>
+    <div class="glow glow-b"></div>
+    <div class="grid"></div>
+    <div class="inner">
+      <div class="copy">
+        <div class="eyebrow"><span class="rule"></span>On-chain forensics</div>
+        <h1>Eunomia<br><em>Network</em></h1>
+        <p class="lede">Hunters submit exploit reports, a DAO votes on severity, and every report keeps a trail that survives cross-examination.</p>
+        <div class="rule-row mono">
+          <span class="dot"></span><span>Hunter terminal</span>
+          <span class="dot"></span><span>DAO quorum</span>
+          <span class="dot"></span><span>Dispute forensics</span>
+          <span class="dot"></span><span>ENS identity</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Severity verdict</span>
+          <span class="chip">SEV-1</span>
+        </div>
+        <div class="gauge">
+          <strong>78</strong>
+          <span>/ 100</span>
+        </div>
+        <div class="track"><i></i></div>
+        <div class="rows">
+          <div class="row"><span>Reentrancy in withdraw</span><b>Confirmed</b></div>
+          <div class="row"><span>Quorum</span><b>14 / 20</b></div>
+          <div class="row"><span>Evidence hash</span><span class="tag">0x9f3c...a71b</span></div>
+          <div class="row"><span>Status</span><b>Disputed</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="social" class="board">
+    <div class="glow glow-a"></div>
+    <div class="grid"></div>
+    <div class="inner">
+      <div class="eyebrow"><span class="rule"></span>Threat registry<span class="rule"></span></div>
+      <h2>Eunomia <em>Network</em></h2>
+      <p>On-chain forensics with a threat registry. Every report, court-ready.</p>
+      <div class="foot">Report. Vote. Dispute.</div>
+    </div>
+  </section>
+
+  <script>
+    (function () {
+      var board = new URLSearchParams(window.location.search).get('board') || 'banner';
+      var target = document.getElementById(board) || document.getElementById('banner');
+      target.classList.add('is-active');
+    })();
+  </script>
+
+</body>
+</html>

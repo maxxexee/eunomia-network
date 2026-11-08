@@ -1,0 +1,11 @@
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  # The pages load ethers and Supabase from CDNs, so pin those versions by hand.
+  # The edge function imports its dependencies from esm.sh and deploys on push.
