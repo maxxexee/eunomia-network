@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/maxxexee/eunomia/actions/workflows/check.yml"><img src="https://github.com/maxxexee/eunomia/actions/workflows/check.yml/badge.svg" alt="check workflow"></a>
+  <a href="https://github.com/maxxexee/eunomia-network/actions/workflows/check.yml"><img src="https://github.com/maxxexee/eunomia-network/actions/workflows/check.yml/badge.svg" alt="check workflow"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-cdb26a" alt="MIT"></a>
   <a href="https://eunomia-protocol.netlify.app"><img src="https://img.shields.io/badge/host-Netlify-5cb2ee" alt="Netlify"></a>
   <a href="https://supabase.com"><img src="https://img.shields.io/badge/auth-Supabase-4ADE80" alt="Supabase auth"></a>
@@ -178,7 +178,7 @@ node scripts/check-repo.mjs
 Requirements: Python 3 or any static file server. Node.js 20 or newer for the repository checks.
 
 ```bash
-git clone https://github.com/maxxexee/eunomia.git
+git clone https://github.com/maxxexee/eunomia-network.git
 cd eunomia
 python3 -m http.server 8080
 ```

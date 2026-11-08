@@ -10,7 +10,7 @@ Only the `main` branch is supported. There are no maintained release branches.
 
 Use GitHub private vulnerability reporting:
 
-https://github.com/maxxexee/eunomia/security/advisories/new
+https://github.com/maxxexee/eunomia-network/security/advisories/new
 
 Do not open a public issue for a security problem. Do not include private keys, vault keys, service role keys, or customer data in a report. Use a minimal reproduction and redact sensitive values.
 

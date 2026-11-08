@@ -15,7 +15,7 @@ Thanks for helping improve Eunomia. This is a static frontend plus one Supabase 
 Requirements: Node.js 20 or newer for the repository checks. There is no build step.
 
 ```bash
-git clone https://github.com/maxxexee/eunomia.git
+git clone https://github.com/maxxexee/eunomia-network.git
 cd eunomia
 python3 -m http.server 8080
 ```
